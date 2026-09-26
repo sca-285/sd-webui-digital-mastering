@@ -1,4 +1,4 @@
-# Digital Mastering Suite
+# Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
 composite. Works on Forge, reForge and Forge Classic (Neo). 36 look presets,
