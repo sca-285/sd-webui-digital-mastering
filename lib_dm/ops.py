@@ -1,0 +1,282 @@
+"""The image operations. Pure torch, (B, 3, H, W) float in 0..1, no WebUI imports.
+
+Values may leave 0..1 between steps (clarity headroom, exposure) and are only
+clamped where an operation needs it and once at the very end.
+"""
+
+from __future__ import annotations
+
+import math
+
+import torch
+import torch.nn.functional as F
+
+LUMA = (0.2126, 0.7152, 0.0722)   # Rec.709, which is what sRGB primaries are
+
+
+def luma(x):
+    w = x.new_tensor(LUMA).view(1, 3, 1, 1)
+    return (x * w).sum(1, keepdim=True)
+
+
+def smoothstep(e0, e1, x):
+    t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
+
+def srgb_to_linear(x):
+    x = x.clamp_min(0.0)
+    return torch.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+
+
+def linear_to_srgb(x):
+    x = x.clamp_min(0.0)
+    return torch.where(x <= 0.0031308, x * 12.92, 1.055 * x ** (1 / 2.4) - 0.055)
+
+
+def hue_to_rgb(h: float, device, dtype):
+    """Fully saturated colour of hue h (0..1), as a (1, 3, 1, 1) tensor."""
+    k = torch.tensor([5.0, 3.0, 1.0], device=device, dtype=dtype)
+    k = (k + h * 6.0) % 6.0
+    rgb = 1.0 - torch.clamp(torch.minimum(k, 4.0 - k), 0.0, 1.0)
+    return rgb.view(1, 3, 1, 1)
+
+
+# ---------------------------------------------------------------- filters
+
+_kernels = {}
+
+
+def _gauss1d(sigma, radius, device, dtype):
+    key = (round(float(sigma), 4), radius, device, dtype)
+    k = _kernels.get(key)
+    if k is None:
+        t = torch.arange(-radius, radius + 1, device=device, dtype=dtype)
+        k = torch.exp(-0.5 * (t / sigma) ** 2)
+        k = k / k.sum()
+        _kernels[key] = k
+    return k
+
+
+def gaussian_blur(x, sigma, radius=None):
+    """Gaussian blur; separable (2(2r+1) taps instead of (2r+1)^2) above r = 3.
+
+    radius defaults to 3 sigma. The detail filters pass a smaller radius (a
+    kernel cut off at about 1 sigma), which suits their look and is cheaper.
+    """
+    if sigma <= 0:
+        return x
+    c = x.shape[1]
+    radius = max(1, int(math.ceil(3.0 * sigma)) if radius is None else int(radius))
+    k = _gauss1d(sigma, radius, x.device, x.dtype)
+    # Reflect padding needs the pad to be smaller than the side.
+    mode = "reflect" if radius < min(x.shape[-2:]) else "replicate"
+    if radius <= 3:
+        # Small kernels: one 2-D pass beats two 1-D ones (measured: 1-D
+        # depthwise convs take a slow path on CPU; 5x5 in one pass is 2x faster).
+        k2 = torch.outer(k, k).view(1, 1, 2 * radius + 1, 2 * radius + 1)
+        return F.conv2d(F.pad(x, (radius,) * 4, mode=mode), k2.expand(c, 1, -1, -1), groups=c)
+    x = F.pad(x, (radius, radius, 0, 0), mode=mode)
+    x = F.conv2d(x, k.view(1, 1, 1, -1).expand(c, 1, 1, -1), groups=c)
+    x = F.pad(x, (0, 0, radius, radius), mode=mode)
+    return F.conv2d(x, k.view(1, 1, -1, 1).expand(c, 1, -1, 1), groups=c)
+
+
+def sobel_magnitude(y):
+    """|gradient| of a single-channel (B, 1, H, W) image."""
+    k = y.new_tensor([[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]])
+    k = torch.stack([k, k.t()]).unsqueeze(1)            # (2, 1, 3, 3): x and y
+    g = F.conv2d(F.pad(y, (1, 1, 1, 1), mode="replicate"), k)
+    return torch.sqrt((g * g).sum(1, keepdim=True) + 1e-12)
+
+
+# ---------------------------------------------------------------- restoration
+
+def deblock(x, strength):
+    """Soften the two pixels either side of each 8x8 JPEG block boundary."""
+    _, _, h, w = x.shape
+    rows = torch.arange(h, device=x.device)
+    cols = torch.arange(w, device=x.device)
+    on_r = ((rows % 8 == 7) & (rows < h - 1)) | ((rows % 8 == 0) & (rows > 0))
+    on_c = ((cols % 8 == 7) & (cols < w - 1)) | ((cols % 8 == 0) & (cols > 0))
+    mask = (on_r.view(1, 1, h, 1) | on_c.view(1, 1, 1, w)).to(x.dtype)
+    k = x.new_tensor([[1.0, 2.0, 1.0], [2.0, 4.0, 2.0], [1.0, 2.0, 1.0]]) / 16.0
+    blurred = F.conv2d(F.pad(x, (1, 1, 1, 1), mode="replicate"),
+                       k.expand(3, 1, 3, 3), groups=3)
+    return torch.lerp(x, blurred, mask * strength)
+
+
+def dering(x, strength):
+    """Smooth the flat areas right next to strong edges, where ringing lives."""
+    halo = sobel_magnitude(luma(x))
+    # 5x5 max as two 1-D passes: identical result, 10 comparisons instead of 25.
+    halo = F.max_pool2d(halo, (1, 5), stride=1, padding=(0, 2))
+    halo = F.max_pool2d(halo, (5, 1), stride=1, padding=(2, 0))
+    halo = (halo * 3.0).clamp(0.0, 1.0)
+    return torch.lerp(x, gaussian_blur(x, 1.5, radius=2), halo * strength)
+
+
+# ---------------------------------------------------------------- tone & colour
+
+def exposure_white_balance(x, exposure, temperature, tint):
+    """In linear light, where a gain is a gain. Brightness-neutral WB gains."""
+    gains = torch.tensor([1.0 + 0.4 * temperature, 1.0 - 0.4 * tint,
+                          1.0 - 0.4 * temperature], dtype=x.dtype, device=x.device)
+    gains = gains / (gains * gains.new_tensor(LUMA)).sum()
+    gains = gains * (2.0 ** exposure)
+    return linear_to_srgb(srgb_to_linear(x) * gains.view(1, 3, 1, 1))
+
+
+def cdl(x, slope, offset, power):
+    """ASC CDL slope/offset/power. clamp_min(0), not an epsilon: 1e-6 ** 0.1 is
+    0.25, which would turn every black milky."""
+    return (x * slope + offset).clamp_min(0.0) ** power
+
+
+def contrast(x, amount):
+    """S-curve around mid-grey; negative flattens. Out-of-range values pass."""
+    xc = x.clamp(0.0, 1.0)
+    return x + amount * (xc * xc * (3.0 - 2.0 * xc) - xc)
+
+
+def saturation_vibrance(x, saturation, vibrance):
+    y = luma(x)
+    factor = x.new_full((1, 1, 1, 1), saturation)
+    if vibrance:
+        chroma = (x.amax(1, keepdim=True) - x.amin(1, keepdim=True)).clamp(0.0, 1.0)
+        # Vibrance acts on what is still muted and leaves saturated colour be.
+        factor = factor * (1.0 + vibrance * (1.0 - chroma) ** 2)
+    return y + (x - y) * factor
+
+
+def split_tone(x, shadow_hue, shadow_amt, high_hue, high_amt, balance):
+    """Push shadows towards one hue and highlights towards another.
+
+    The tint is added with its own luma removed, so it recolours without
+    brightening or darkening.
+    """
+    y = luma(x).clamp(0.0, 1.0)
+    pivot = 0.5 - 0.3 * balance
+    w_high = torch.sigmoid((y - pivot) * 8.0)
+    out = x
+    for hue, amt, w in ((shadow_hue, shadow_amt, 1.0 - w_high), (high_hue, high_amt, w_high)):
+        if amt <= 0:
+            continue
+        c = hue_to_rgb(hue, x.device, x.dtype)
+        c = c - luma(c)
+        out = out + c * (0.40 * amt) * w
+    return out
+
+
+def apply_lut(x, volume, strength):
+    """Trilinear 3D LUT through grid_sample. volume: (1, 3, N, N, N), .cube order."""
+    b, _, h, w = x.shape
+    grid = (x.clamp(0.0, 1.0) * 2.0 - 1.0).permute(0, 2, 3, 1).reshape(b, 1, h, w, 3)
+    mapped = F.grid_sample(volume.expand(b, -1, -1, -1, -1), grid, mode="bilinear",
+                           padding_mode="border", align_corners=True)
+    return torch.lerp(x, mapped[:, :, 0], strength)
+
+
+def rgb_hue_sat(x):
+    """HSV hue in 0..1 and saturation, vectorised."""
+    r, g, b = x[:, 0:1], x[:, 1:2], x[:, 2:3]
+    cmax, cmin = x.amax(1, keepdim=True), x.amin(1, keepdim=True)
+    delta = cmax - cmin
+    d = delta + 1e-6
+    hue = torch.where(cmax == r, ((g - b) / d) % 6.0,
+          torch.where(cmax == g, (b - r) / d + 2.0, (r - g) / d + 4.0)) / 6.0
+    hue = torch.where(delta > 0, hue, torch.zeros_like(hue))
+    sat = delta / (cmax + 1e-6)
+    return hue, sat
+
+
+def selective_color(x, keep_hue, tolerance, desat, protect_mask=None):
+    """Desaturate everything except one hue (and, optionally, people)."""
+    xc = x.clamp(0.0, 1.0)
+    hue, sat = rgb_hue_sat(xc)
+    dist = (hue - keep_hue).abs()
+    dist = torch.minimum(dist, 1.0 - dist)
+    keep = 1.0 - ((dist - 0.7 * tolerance) / (0.3 * tolerance + 1e-6)).clamp(0.0, 1.0)
+    keep = keep * ((sat - 0.1) * 5.0).clamp(0.0, 1.0)
+    if protect_mask is not None:
+        keep = (keep + protect_mask * 0.6).clamp(0.0, 1.0)
+    grey = luma(x).expand_as(x)
+    return torch.lerp(torch.lerp(x, grey, desat), x, keep)
+
+
+# ---------------------------------------------------------------- detail
+
+def clarity(x, amount, radius, protect_mask=None):
+    """Local contrast on luma, weighted to the midtones.
+
+    Luma only, so it cannot fringe colour edges; midtone weighting keeps it off
+    clipped highlights and crushed shadows, where it only makes halos. Negative
+    amounts give the diffusion/glow look and are applied everywhere.
+    """
+    y = luma(x)
+    detail = y - gaussian_blur(y, radius, radius=math.ceil(radius))
+    if amount > 0:
+        yc = y.clamp(0.0, 1.0)
+        detail = detail * (4.0 * yc * (1.0 - yc)).clamp(0.25, 1.0)
+    if protect_mask is not None:
+        detail = detail * (1.0 - protect_mask)
+    return x + detail * amount
+
+
+def sharpen(x, amount, protect_mask=None):
+    """Unsharp mask on luma, only where there are edges (never on flat noise)."""
+    y = luma(x)
+    detail = y - gaussian_blur(y, 1.0, radius=1)
+    mask = (sobel_magnitude(y) * 5.0).clamp(0.0, 1.0)
+    if protect_mask is not None:
+        mask = mask * (1.0 - protect_mask)
+    return x + detail * (2.0 * amount) * mask
+
+
+# ---------------------------------------------------------------- finishing
+
+def vignette(x, amount):
+    _, _, h, w = x.shape
+    yy = torch.linspace(-1.0, 1.0, h, device=x.device, dtype=x.dtype).view(1, 1, h, 1)
+    xx = torch.linspace(-1.0, 1.0, w, device=x.device, dtype=x.dtype).view(1, 1, 1, w)
+    d = torch.sqrt(xx * xx + yy * yy) / math.sqrt(2.0)
+    m = smoothstep(0.35, 1.0, d)
+    if amount > 0:
+        return x * (1.0 - 0.85 * amount * m)
+    return torch.lerp(x, torch.ones_like(x), (-0.6 * amount) * m)
+
+
+def film_grain(x, amount, size, generator):
+    """Monochrome, luminance-weighted grain, reproducible from the seed."""
+    b, _, h, w = x.shape
+    gh, gw = max(1, int(round(h / size))), max(1, int(round(w / size)))
+    n = torch.randn((b, 1, gh, gw), generator=generator, device=x.device, dtype=x.dtype)
+    if (gh, gw) != (h, w):
+        n = F.interpolate(n, size=(h, w), mode="bicubic", align_corners=False)
+        n = n / n.std().clamp_min(1e-6)
+    y = luma(x).clamp(0.0, 1.0)
+    weight = 0.35 + 0.65 * (4.0 * y * (1.0 - y))       # strongest in the midtones
+    return x + n * (0.06 * amount) * weight
+
+
+def dither(x, strength, generator):
+    """TPDF dither of about one 8-bit step, to break up banding on export."""
+    r = torch.rand((2, *x.shape), generator=generator, device=x.device, dtype=x.dtype)
+    return x + (r[0] - r[1]) * (1.5 / 255.0) * strength
+
+
+# ---------------------------------------------------------------- scopes
+
+def false_color(x):
+    y = luma(x.clamp(0.0, 1.0))
+    out = y.expand(-1, 3, -1, -1).clone()
+    bands = [
+        (y < 0.05, (0.5, 0.0, 0.5)),                  # crushed
+        ((y >= 0.05) & (y < 0.15), (0.0, 0.5, 0.5)),  # deep shadow
+        ((y >= 0.45) & (y <= 0.55), (0.0, 1.0, 0.0)), # mid-grey
+        ((y > 0.85) & (y <= 0.95), (1.0, 1.0, 0.0)),  # near clip
+        (y > 0.95, (1.0, 0.0, 0.0)),                  # clipped
+    ]
+    for m, rgb in bands:
+        out = torch.where(m, x.new_tensor(rgb).view(1, 3, 1, 1), out)
+    return out
