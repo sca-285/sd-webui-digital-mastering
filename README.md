@@ -138,7 +138,7 @@ Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit
 Eileen Collins by NASA (public domain), coffee cup by Rachel Michetti (CC0),
 Falcon 9 launch by SpaceX (public domain).
 
-Thanks also to **Claude**, Anthropic's AI assistant, for help building this
+Thanks also to **Claude**, for help building this
 extension.
 
 ## License
