@@ -26,17 +26,17 @@ def _url(path):
         return f"file={path.replace(os.sep, '/')}?{int(os.path.getmtime(path))}"
 
 
-def reference_html(root, prefix, alt):
+def reference_html(root, prefix, alt, file=FILE, label="Preset reference"):
     """HTML for the folded reference, or "" if the picture is missing."""
-    path = os.path.join(root, FILE)
+    path = os.path.join(root, file)
     if not os.path.isfile(path):
         return ""
     url = html.escape(_url(path), quote=True)
     p = prefix
     return (
         f'<details class="{p}">'
-        f'<summary title="Show or hide the preset reference">'
-        f'{_ICON_SHOW.format(p=p)}{_ICON_HIDE.format(p=p)}<span>Preset reference</span></summary>'
+        f'<summary title="Show or hide the {html.escape(label.lower())}">'
+        f'{_ICON_SHOW.format(p=p)}{_ICON_HIDE.format(p=p)}<span>{html.escape(label)}</span></summary>'
         f'<div class="{p}-body">'
         f'<a href="{url}" target="_blank" rel="noopener" title="Open full size in a new tab">'
         f'<img src="{url}" alt="{html.escape(alt, quote=True)}" loading="lazy"></a>'

@@ -90,6 +90,32 @@ To keep *people* in colour instead, turn on **Protect people** in *Repair & Tool
         ],
     },
     {
+        "title": "Overlay",
+        "guide": """
+**Texture layers on top of the grade**: light leaks, dust, bokeh, prism flares, scratches. Tick **Enable Overlay**, then pick a file for **Layer 1** (and **Layer 2** to stack two).
+
+| Control | What it does |
+|---|---|
+| Blend | *Auto* suits most files: Normal for transparent PNGs, Screen for textures on black. Screen / Add brighten (light), Multiply darkens (textures on white), Overlay / Soft light add contrast |
+| Opacity | How strong the layer is |
+| Colour shift | Recolours the layer: a yellow leak at 0.5 turns blue |
+| Zoom | Crops into the texture: bigger, fewer specks |
+| Fit | Cover keeps the texture's proportions and crops; Stretch fills the frame exactly |
+
+**Vary with seed** flips and shifts the layers per image, reproducibly, so a batch does not repeat one texture. **Turn to match orientation** turns a landscape texture for a portrait image.
+
+Files: the extension's `overlays` folder ships a set; add your own PNG / WebP / JPEG to `models/overlays` (or name a folder below) and press **Refresh**. Presets never change your overlay choice.
+The overlays are textures laid on top, the same on every image. For effects worked out from the scene itself (dust only on film, glow from the real highlights, flash by distance) use Optical Realism.
+""",
+        "sections": [
+            (None, ["en_overlay"]),
+            ("Layer 1", ["overlay_1", "ov1_blend", "ov1_opacity", "ov1_hue", "ov1_zoom", "ov1_fit"]),
+            ("Layer 2", ["overlay_2", "ov2_blend", "ov2_opacity", "ov2_hue", "ov2_zoom", "ov2_fit"]),
+            ("Both layers", ["ov_vary", "ov_rotate", "overlay_dir"]),
+        ],
+        "reference": "overlay_reference.jpg",
+    },
+    {
         "title": "Repair & Tools",
         "guide": """
 **Repair** (tick **Enable Restoration**): for img2img sources that are heavily compressed JPEGs or images saved from the web.

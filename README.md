@@ -16,7 +16,7 @@ and grain are in Optical Realism (see below).
     [▦ Preset reference]           <- click to unfold the picture above
     Intensity  ------o---          <- how much of the whole grade, 0 = original
     > Quick start                  <- (closed)
-    [ Color | Detail & Finish | Effects | Repair & Tools ]
+    [ Color | Detail & Finish | Effects | Overlay | Repair & Tools ]
       > Guide                      <- guide for this tab (closed)
       Section title
         [x] Enable ...
@@ -28,12 +28,13 @@ and grain are in Optical Realism (see below).
 | Color | Enable Color · Light (exposure, contrast) · White balance · Colour (saturation, vibrance) · Split toning · CDL |
 | Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen) · Finish (anti-banding) |
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
+| Overlay | Enable Overlay · Layer 1 and Layer 2 (file + Refresh, blend, opacity, colour shift, zoom, fit) · Both layers (vary with seed, turn to match orientation, extra folder) |
 | Repair & Tools | Restoration · Protect people · Exposure check |
 
 Each section has an **Enable** box (Color, Detail & Finish, Selective Color,
-LUT, Restoration); an unticked section is ignored whatever its sliders say.
+LUT, Overlay, Restoration); an unticked section is ignored whatever its sliders say.
 A preset ticks the sections it uses (their other controls at neutral) and
-unticks the rest; it never touches Intensity or the LUT, so you can set
+unticks the rest; it never touches Intensity, the LUT or the overlays, so you can set
 Intensity once and flick through presets. The colour sliders show a colour
 wheel on their track.
 
@@ -75,7 +76,8 @@ that go together:
 ## Order
 
 restoration -> exposure/WB (linear light) -> CDL -> contrast -> saturation ->
-split toning -> LUT -> selective colour -> clarity -> sharpen -> dither. Dither runs last so that no later step amplifies it.
+split toning -> LUT -> selective colour -> clarity -> sharpen -> overlay layers ->
+dither. Overlays go on after sharpening, so their specks are never sharpened. Dither runs last so that no later step amplifies it.
 
 ## PNG info
 
@@ -95,6 +97,13 @@ they moved to Optical Realism are ignored.
 - Dither is seeded from the image's seed: the same seed gives the same result.
 - **Protect people** uses SegFormer-B0 (about 15 MB, downloaded on first use).
   The model is parked on the CPU between jobs.
+- **Overlays**: 12 ship in `overlays/` (see `overlay_reference.jpg`, also
+  folded in the Overlay tab). Add your own PNG / WebP / JPEG to
+  `models/overlays` or name another folder, then press **Refresh**; a file
+  with the same name as a shipped one replaces it. Blend *Auto* uses Normal for
+  transparent PNGs and Screen for opaque textures (light on black). **Vary
+  with seed** flips and shifts the layers per image, reproducibly. A missing
+  overlay is skipped with a message and the rest of the grade still applies.
 - LUTs: put `.cube` files in `models/LUTs`, or name another folder. LUTs with a
   non-0..1 `DOMAIN_MIN/MAX` are refused with a message; a missing LUT is
   skipped and the rest of the grade still applies.
@@ -109,15 +118,22 @@ lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
 lib_dm/lut.py                  .cube discovery and parsing
+lib_dm/overlay.py              overlay discovery, loading and fitting
 lib_dm/segment.py              SegFormer-B0 person mask
 lib_dm/reference.py            the folded preset reference
 preset_reference.jpg           the preset reference picture
+overlays/                      the shipped overlay textures
+overlay_reference.jpg          every shipped overlay on the sample photos
 style.css                      colour-wheel sliders, section titles, reference box
 ```
 
 ## Credits
 
-Sample photos in `preset_reference.jpg`, from scikit-image's sample data:
+Overlays: *Bokeh - Pastel*, *Light Leak - Yellow*, *Prism Flare*, *Scratches -
+Cracked* and *Sparkle Dust - Orange* are the author's own; the other seven
+were generated in code for this extension.
+
+Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit-image's sample data:
 Eileen Collins by NASA (public domain), coffee cup by Rachel Michetti (CC0),
 Falcon 9 launch by SpaceX (public domain).
 

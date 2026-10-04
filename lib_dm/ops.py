@@ -235,6 +235,38 @@ def sharpen(x, amount, protect_mask=None):
 
 # ---------------------------------------------------------------- finishing
 
+def hue_rotate(rgb, turns):
+    """Rotate the hue of an RGB tensor by `turns` of the colour wheel (YIQ)."""
+    if abs(turns) < 1e-6:
+        return rgb
+    t = 2.0 * math.pi * turns
+    c, s = math.cos(t), math.sin(t)
+    to_yiq = rgb.new_tensor([[0.299, 0.587, 0.114], [0.596, -0.274, -0.322], [0.211, -0.523, 0.312]])
+    rot = rgb.new_tensor([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
+    m = torch.linalg.inv(to_yiq) @ rot @ to_yiq
+    return torch.einsum("ij,bjhw->bihw", m, rgb).clamp(0.0, 1.0)
+
+
+def blend_overlay(x, layer, mode, opacity, hue=0.0):
+    """Lay an RGBA layer (from overlay.prepare) over x with a blend mode."""
+    c = hue_rotate(layer[:, :3], hue)
+    a = layer[:, 3:4] * opacity
+    base = x.clamp(0.0, 1.0)
+    if mode == "Screen":
+        out = 1.0 - (1.0 - base) * (1.0 - c)
+    elif mode == "Add":
+        out = base + c
+    elif mode == "Multiply":
+        out = base * c
+    elif mode == "Overlay":
+        out = torch.where(base < 0.5, 2.0 * base * c, 1.0 - 2.0 * (1.0 - base) * (1.0 - c))
+    elif mode == "Soft light":
+        out = (1.0 - 2.0 * c) * base * base + 2.0 * c * base
+    else:  # Normal
+        out = c
+    return torch.lerp(x, out, a)
+
+
 def dither(x, strength, generator):
     """TPDF dither of about one 8-bit step, to break up banding on export."""
     r = torch.rand((2, *x.shape), generator=generator, device=x.device, dtype=x.dtype)

@@ -12,9 +12,10 @@ Grade only: vignette, grain and every other camera trait are Optical
 Realism's. Pair a look here with one of its camera presets (see README).
 """
 
-from .controls import compose
+from .controls import OVERLAY_CONTROLS, compose
 
-NOT_IN_PRESETS = {"strength", "en_lut", "lut", "lut_dir", "lut_strength", "false_color"}
+# Like the LUT, overlays are your own pick and stay put across presets.
+NOT_IN_PRESETS = {"strength", "en_lut", "lut", "lut_dir", "lut_strength", "false_color", *OVERLAY_CONTROLS}
 
 CUSTOM = "Custom"
 
