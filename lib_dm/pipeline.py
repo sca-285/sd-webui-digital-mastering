@@ -9,7 +9,6 @@ Order, and why:
     LUT                  a look on top of the grade, as colourists stack it
     selective colour     after the look, so the kept hue is the final hue
     clarity, sharpen     detail last among the edits, on the final tones
-    vignette, grain      finishing
     intensity            blend the whole grade back towards the original
     dither               very last: anything after it would amplify it
 
@@ -95,10 +94,6 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     if s["sharpen"] > 0:
         x = ops.sharpen(x, s["sharpen"], protect)
 
-    if s["vignette"] != 0:
-        x = ops.vignette(x, s["vignette"])
-    if s["grain"] > 0:
-        x = ops.film_grain(x, s["grain"], s["grain_size"], gen)
     x = x.clamp(0.0, 1.0)
     if s["strength"] < 1.0:
         x = torch.lerp(original, x, s["strength"])

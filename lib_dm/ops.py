@@ -235,30 +235,6 @@ def sharpen(x, amount, protect_mask=None):
 
 # ---------------------------------------------------------------- finishing
 
-def vignette(x, amount):
-    _, _, h, w = x.shape
-    yy = torch.linspace(-1.0, 1.0, h, device=x.device, dtype=x.dtype).view(1, 1, h, 1)
-    xx = torch.linspace(-1.0, 1.0, w, device=x.device, dtype=x.dtype).view(1, 1, 1, w)
-    d = torch.sqrt(xx * xx + yy * yy) / math.sqrt(2.0)
-    m = smoothstep(0.35, 1.0, d)
-    if amount > 0:
-        return x * (1.0 - 0.85 * amount * m)
-    return torch.lerp(x, torch.ones_like(x), (-0.6 * amount) * m)
-
-
-def film_grain(x, amount, size, generator):
-    """Monochrome, luminance-weighted grain, reproducible from the seed."""
-    b, _, h, w = x.shape
-    gh, gw = max(1, int(round(h / size))), max(1, int(round(w / size)))
-    n = torch.randn((b, 1, gh, gw), generator=generator, device=x.device, dtype=x.dtype)
-    if (gh, gw) != (h, w):
-        n = F.interpolate(n, size=(h, w), mode="bicubic", align_corners=False)
-        n = n / n.std().clamp_min(1e-6)
-    y = luma(x).clamp(0.0, 1.0)
-    weight = 0.35 + 0.65 * (4.0 * y * (1.0 - y))       # strongest in the midtones
-    return x + n * (0.06 * amount) * weight
-
-
 def dither(x, strength, generator):
     """TPDF dither of about one 8-bit step, to break up banding on export."""
     r = torch.rand((2, *x.shape), generator=generator, device=x.device, dtype=x.dtype)

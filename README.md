@@ -1,8 +1,9 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 36 look presets,
-each with a one-line description.
+composite. Works on Forge, reForge and Forge Classic (Neo). 38 look presets,
+each with a one-line description. Grade only: camera traits such as vignette
+and grain are in Optical Realism (see below).
 
 ![Preset reference](preset_reference.jpg)
 
@@ -25,7 +26,7 @@ each with a one-line description.
 | Tab | Sections |
 |---|---|
 | Color | Enable Color · Light (exposure, contrast) · White balance · Colour (saturation, vibrance) · Split toning · CDL |
-| Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen) · Finish (vignette, grain, grain size, anti-banding) |
+| Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen) · Finish (anti-banding) |
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
 | Repair & Tools | Restoration · Protect people · Exposure check |
 
@@ -40,11 +41,41 @@ wheel on their track.
 (portrait, still life, night scene). Scroll inside the box, or click the
 picture to open it full size in a new tab. Click the button again to fold it.
 
+## Optical Realism and Digital Mastering
+
+The two extensions split the work the way a photo is made, and no control
+exists in both:
+
+| Optical Realism (runs first) | Digital Mastering (runs second) |
+|---|---|
+| The camera: lens geometry, vignette, depth of field, blur, bloom, flare, halation, light wrap, flash, haze, grain, dust, scratches, date stamp, highlight roll-off | The grade: exposure, contrast, white balance (temperature, tint), saturation, vibrance, split toning, CDL, LUT, selective colour, clarity, sharpen, anti-banding, JPEG repair |
+
+Each preset covers only its own side, so a look is one preset from each. Pairs
+that go together:
+
+| Optical Realism | Digital Mastering |
+|---|---|
+| Subtle Real Camera | Natural: Clean Polish |
+| Portrait 85mm f/1.8 | Portrait: Studio Skin |
+| Portrait f/1.2 Dreamy | Portrait: Soft Glamour |
+| Street 35mm f/5.6 | Natural: Vivid Pop or Film: Cool Slide Stock |
+| Macro Close-up | Natural: HDR Detail |
+| Vintage Lens | Film: Faded Vintage or Film: Instant Photo |
+| Film Camera 35mm | Film: Warm Portrait Stock |
+| Heavy Film Grain | B&W: Classic Silver or B&W: Hard Noir |
+| Pro-Mist Cinema | Cinema: Teal & Orange |
+| Anamorphic Flare | Cinema: Blockbuster |
+| Night City Glow | Mood: Cyberpunk Neon |
+| Landscape Aerial Haze | Mood: Golden Hour |
+| Foggy Morning | Natural: Soft Matte or Mood: Blue Hour |
+| Backlit Rim Light | Mood: Golden Hour |
+| Dusty Night Film | Cinema: Dusty Night or Cinema: Moody Dark |
+| Digital Flash | Mood: Flash Snapshot |
+
 ## Order
 
 restoration -> exposure/WB (linear light) -> CDL -> contrast -> saturation ->
-split toning -> LUT -> selective colour -> clarity -> sharpen -> vignette ->
-grain -> dither. Dither runs last so that no later step amplifies it.
+split toning -> LUT -> selective colour -> clarity -> sharpen -> dither. Dither runs last so that no later step amplifies it.
 
 ## PNG info
 
@@ -53,15 +84,15 @@ One entry, only the non-default values:
     Digital Mastering: "temperature=0.35; contrast=0.1; highlight_tint=0.4"
 
 Send-to / paste restores all of it. The older `Restore(...) | CDL(...)` format
-still pastes.
+still pastes. `vignette`, `grain` and `grain_size` from images made before
+they moved to Optical Realism are ignored.
 
 ## Notes
 
 - Exposure and white balance work in linear light. Clarity and sharpen work on
   luminance only, so they cannot fringe colour edges; clarity is weighted to
   the midtones so it does not halo clipped areas.
-- Grain and dither are seeded from the image's seed: the same seed gives the
-  same grain.
+- Dither is seeded from the image's seed: the same seed gives the same result.
 - **Protect people** uses SegFormer-B0 (about 15 MB, downloaded on first use).
   The model is parked on the CPU between jobs.
 - LUTs: put `.cube` files in `models/LUTs`, or name another folder. LUTs with a
@@ -73,7 +104,7 @@ still pastes.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 36 looks, each listing only what it changes
+lib_dm/presets.py              the 38 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch

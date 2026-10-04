@@ -53,11 +53,8 @@ CONTROLS = [
     # --- detail & finish ----------------------------------------------------
     Control("clarity", "Clarity", 0.0, -1.0, 2.0, 0.05, info="+ crisp local contrast / - soft glow"),
     Control("sharpen", "Sharpen", 0.0, 0.0, 1.0, 0.05, info="Edges only; flat areas and noise are left alone."),
-    Control("vignette", "Vignette", 0.0, -1.0, 1.0, 0.01, info="+ dark corners / - bright corners"),
-    Control("grain", "Film grain", 0.0, 0.0, 1.0, 0.01),
     Control("clarity_radius", "Clarity radius", 4.0, 1.0, 10.0, 0.5,
             info="Small = texture, large = shape and depth."),
-    Control("grain_size", "Grain size", 1.0, 0.5, 3.0, 0.1),
     Control("dither", "Anti-banding", 0.0, 0.0, 1.0, 0.05,
             info="Invisible noise that breaks up banding in skies and gradients."),
     # --- effects -------------------------------------------------------------
@@ -86,7 +83,7 @@ GROUPS = {
     "en_color": ["exposure", "contrast", "temperature", "tint", "saturation", "vibrance",
                  "shadow_hue", "shadow_tint", "highlight_hue", "highlight_tint", "tone_balance",
                  "slope", "offset", "power"],
-    "en_detail": ["clarity", "sharpen", "vignette", "grain", "clarity_radius", "grain_size", "dither"],
+    "en_detail": ["clarity", "sharpen", "clarity_radius", "dither"],
     "en_splash": ["splash_desat", "splash_hue", "splash_tolerance"],
     "en_lut": ["lut", "lut_strength"],
     "en_repair": ["deblock", "dering"],
