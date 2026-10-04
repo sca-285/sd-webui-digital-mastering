@@ -97,7 +97,7 @@ they moved to Optical Realism are ignored.
 - Dither is seeded from the image's seed: the same seed gives the same result.
 - **Protect people** uses SegFormer-B0 (about 15 MB, downloaded on first use).
   The model is parked on the CPU between jobs.
-- **Overlays**: 12 ship in `overlays/` (see `overlay_reference.jpg`, also
+- **Overlays**: 15 ship in `overlays/` (see `overlay_reference.jpg`, also
   folded in the Overlay tab). Add your own PNG / WebP / JPEG to
   `models/overlays` or name another folder, then press **Refresh**; a file
   with the same name as a shipped one replaces it. Blend *Auto* uses Normal for
@@ -129,9 +129,10 @@ style.css                      colour-wheel sliders, section titles, reference b
 
 ## Credits
 
-Overlays: *Bokeh - Pastel*, *Light Leak - Yellow*, *Prism Flare*, *Scratches -
-Cracked* and *Sparkle Dust - Orange* are the author's own; the other seven
-were generated in code for this extension.
+Overlays: *Bokeh - Lavender*, *Bokeh - Pastel*, *Film Dirt - Hairs & Lines*,
+*Light Leak - Fire*, *Light Leak - Yellow*, *Prism Flare*, *Scratches - Cracked*
+and *Sparkle Dust - Orange* are the author's own; the other seven were
+generated in code for this extension.
 
 Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit-image's sample data:
 Eileen Collins by NASA (public domain), coffee cup by Rachel Michetti (CC0),
