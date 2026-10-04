@@ -13,7 +13,7 @@ EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if EXTENSION_ROOT not in sys.path:
     sys.path.insert(0, EXTENSION_ROOT)
 
-from lib_dm import lut, segment  # noqa: E402
+from lib_dm import lut, overlay, segment  # noqa: E402
 from lib_dm.controls import (  # noqa: E402
     BY_NAME, INFOTEXT_KEY, LOCAL_ONLY, NAMES, from_infotext, settings, to_infotext,
 )
@@ -29,6 +29,15 @@ def lut_folders(extra=""):
 
 def lut_choices(extra=""):
     return ["None", *lut.find_luts(*lut_folders(extra))]
+
+
+def overlay_folders(extra=""):
+    # Shipped set first; a file of the same name in models/overlays wins.
+    return [os.path.join(EXTENSION_ROOT, "overlays"), os.path.join(shared.models_path, "overlays"), extra]
+
+
+def overlay_choices(extra=""):
+    return ["None", *overlay.find_overlays(*overlay_folders(extra))]
 
 
 def _image_seed(p, image):
@@ -85,11 +94,15 @@ class Script(scripts.Script):
             with gr.Accordion("Quick start", open=False, elem_id=f"dm_help_{tab}"):
                 gr.Markdown(QUICK_START)
 
+            ov_refresh = []
             with gr.Tabs():
                 for t in LAYOUT:
                     with gr.Tab(t["title"]):
                         with gr.Accordion("Guide", open=False):
                             gr.Markdown(t["guide"])
+                        if t.get("reference"):
+                            gr.HTML(reference_html(EXTENSION_ROOT, "dm-ref", "The shipped overlays",
+                                                   file=t["reference"], label="Overlay reference"))
                         for title, names in t["sections"]:
                             if title:
                                 gr.Markdown(f"**{title}**", elem_classes=["dm-section"])
@@ -101,6 +114,12 @@ class Script(scripts.Script):
                                     refresh = gr.Button("Refresh", size="sm", scale=0, min_width=90,
                                                         elem_id=f"dm_lut_refresh_{tab}")
                                 add_all([n for n in names if n not in ("en_lut", "lut")])
+                            elif names and names[0].startswith("overlay_") and names[0] != "overlay_dir":
+                                with gr.Row():
+                                    add(names[0])
+                                    ov_refresh.append(gr.Button("Refresh", size="sm", scale=0, min_width=90,
+                                                                elem_id=f"dm_{names[0]}_refresh_{tab}"))
+                                add_all(names[1:])
                             else:
                                 add_all(names)
 
@@ -113,6 +132,16 @@ class Script(scripts.Script):
         refresh.click(refresh_luts, [comps["lut_dir"], comps["lut"]], [comps["lut"]])
         # blur, not change: change fires on every keystroke and rescans the disk.
         comps["lut_dir"].blur(refresh_luts, [comps["lut_dir"], comps["lut"]], [comps["lut"]])
+
+        def refresh_overlays(folder, *current):
+            choices = overlay_choices(folder)
+            return [gr.update(choices=choices, value=c if c in choices else "None") for c in current]
+
+        ov_inputs = [comps["overlay_dir"], comps["overlay_1"], comps["overlay_2"]]
+        ov_outputs = [comps["overlay_1"], comps["overlay_2"]]
+        for btn in ov_refresh:
+            btn.click(refresh_overlays, ov_inputs, ov_outputs)
+        comps["overlay_dir"].blur(refresh_overlays, ov_inputs, ov_outputs)
 
         def values_for(s):
             return [gr.update() if n in NOT_IN_PRESETS else gr.update(value=s[n]) for n in NAMES]
@@ -150,10 +179,15 @@ class Script(scripts.Script):
         if c.kind == "checkbox":
             return gr.Checkbox(label=c.label, value=c.default, elem_id=eid, info=info)
         if c.kind == "text":
-            return gr.Textbox(label=c.label, value=c.default, elem_id=eid,
-                              placeholder="e.g. D:\\LUTs  (models/LUTs is always searched)")
+            hint = ("e.g. D:\\Overlays  (models/overlays is always searched)" if c.name == "overlay_dir"
+                    else "e.g. D:\\LUTs  (models/LUTs is always searched)")
+            return gr.Textbox(label=c.label, value=c.default, elem_id=eid, placeholder=hint)
         if c.kind == "lut":
             return gr.Dropdown(label=c.label, choices=lut_choices(), value="None", elem_id=eid)
+        if c.kind == "overlay":
+            return gr.Dropdown(label=c.label, choices=overlay_choices(), value="None", elem_id=eid)
+        if c.kind == "choice":
+            return gr.Dropdown(label=c.label, choices=list(c.choices), value=c.default, elem_id=eid, info=info)
         classes = ["dm-hue"] if c.name in HUE_SLIDERS else None
         return gr.Slider(label=c.label, minimum=c.minimum, maximum=c.maximum, step=c.step,
                          value=c.default, elem_id=eid, info=info, elem_classes=classes)
@@ -177,9 +211,22 @@ class Script(scripts.Script):
                     print(f"[Digital Mastering] LUT '{s['lut']}' not found or unusable, skipped.")
                     s["en_lut"] = False
 
+            layers = {}
+            if s["en_overlay"]:
+                found = overlay.find_overlays(*overlay_folders(s["overlay_dir"]))
+                for i in (1, 2):
+                    name = s[f"overlay_{i}"]
+                    if name in ("", "None"):
+                        continue
+                    loaded = overlay.load(found[name]) if name in found else None
+                    if loaded is None:
+                        print(f"[Digital Mastering] Overlay '{name}' not found or unreadable, layer {i} skipped.")
+                    else:
+                        layers[i] = loaded
+
             result, scope = master(
                 pp.image, s, device=device, seed=_image_seed(p, pp.image), lut_volume=volume,
-                mask_fn=lambda im: segment.person_mask(im, device),
+                mask_fn=lambda im: segment.person_mask(im, device), overlays=layers,
             )
         except Exception as exc:
             traceback.print_exc()
@@ -198,4 +245,5 @@ class Script(scripts.Script):
         # instead of re-read from disk) and drop the LUT volumes.
         segment.park()
         lut.clear_cache()
+        overlay.clear_cache()
         devices.torch_gc()

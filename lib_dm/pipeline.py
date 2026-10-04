@@ -9,7 +9,7 @@ Order, and why:
     LUT                  a look on top of the grade, as colourists stack it
     selective colour     after the look, so the kept hue is the final hue
     clarity, sharpen     detail last among the edits, on the final tones
-    vignette, grain      finishing
+    overlay layers       textures on top of the finished grade, never sharpened
     intensity            blend the whole grade back towards the original
     dither               very last: anything after it would amplify it
 
@@ -23,7 +23,8 @@ import torch
 from PIL import Image
 
 from . import ops
-from .controls import GROUPS, NEUTRAL, effective, is_neutral
+from . import overlay as ov
+from .controls import GROUPS, NEUTRAL, OVERLAY_CONTROLS, effective, is_neutral
 
 
 def _active(s, *names):
@@ -42,12 +43,15 @@ def to_image(x):
 
 
 @torch.no_grad()
-def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, mask_fn=None):
+def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, mask_fn=None,
+           overlays=None):
     """Return (graded PIL image, false-colour PIL image or None).
 
     lut_volume: a loaded (1, 3, N, N, N) LUT or None.
     mask_fn:    callable(image) -> (1, 1, H, W) person mask; only called when a
                 stage that uses it is active and s["semantic"] is on.
+    overlays:   {layer number: (RGBA PIL image, has_alpha)} for the overlay
+                layers that are picked and could be loaded.
     """
     s = effective(s)
     alpha = image.getchannel("A") if image.mode == "RGBA" else None
@@ -95,10 +99,23 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     if s["sharpen"] > 0:
         x = ops.sharpen(x, s["sharpen"], protect)
 
-    if s["vignette"] != 0:
-        x = ops.vignette(x, s["vignette"])
-    if s["grain"] > 0:
-        x = ops.film_grain(x, s["grain"], s["grain_size"], gen)
+    if s["en_overlay"] and overlays:
+        # Its own random stream: picking a layer must not change the dither.
+        ov_gen = torch.Generator(device=x.device)
+        ov_gen.manual_seed((int(seed) * 1000003 + 11) & 0x7FFFFFFFFFFFFFFF)
+        for i in (1, 2):
+            if i not in overlays or s[f"ov{i}_opacity"] <= 0:
+                continue
+            rgba, has_alpha = overlays[i]
+            layer = ov.prepare(rgba, image.size, fit=s[f"ov{i}_fit"], zoom=s[f"ov{i}_zoom"],
+                               match_orientation=s["ov_rotate"],
+                               generator=ov_gen if s["ov_vary"] else None,
+                               device=x.device, dtype=x.dtype)
+            mode = s[f"ov{i}_blend"]
+            if mode == "Auto":
+                mode = "Normal" if has_alpha else "Screen"
+            x = ops.blend_overlay(x, layer, mode, s[f"ov{i}_opacity"], s[f"ov{i}_hue"])
+
     x = x.clamp(0.0, 1.0)
     if s["strength"] < 1.0:
         x = torch.lerp(original, x, s["strength"])
@@ -118,7 +135,9 @@ def is_noop(s) -> bool:
     if s["strength"] <= 0 and s["dither"] <= 0:
         return True
     ignore = ("strength", "lut", "lut_dir", "lut_strength", "false_color", "semantic", "protect",
-              *GROUPS)
+              *GROUPS, *OVERLAY_CONTROLS)
+    if any(s[f"overlay_{i}"] not in ("", "None") and s[f"ov{i}_opacity"] > 0 for i in (1, 2)):
+        return False
     if s["lut"] not in ("", "None") and s["lut_strength"] > 0:
         return False
     return all(is_neutral(k, v) for k, v in s.items() if k in NEUTRAL and k not in ignore)

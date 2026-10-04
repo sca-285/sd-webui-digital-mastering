@@ -9,7 +9,9 @@ stages to skip. Each section also has an Enable box (see GROUPS).
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from .overlay import BLENDS, FITS
 
 
 @dataclass(frozen=True)
@@ -20,9 +22,10 @@ class Control:
     minimum: float = 0.0
     maximum: float = 1.0
     step: float = 0.01
-    kind: str = "slider"   # slider | checkbox | lut | text
+    kind: str = "slider"   # slider | checkbox | lut | overlay | choice | text
     info: str = ""
     neutral: object = None  # value at which it does nothing; None = same as default
+    choices: tuple = field(default_factory=tuple)
 
 
 # Where each control sits on screen is decided in lib_dm/layout.py.
@@ -35,6 +38,7 @@ CONTROLS = [
     Control("en_splash", "Enable Selective Color", False, kind="checkbox"),
     Control("en_lut", "Enable LUT", False, kind="checkbox"),
     Control("en_repair", "Enable Restoration", False, kind="checkbox"),
+    Control("en_overlay", "Enable Overlay", False, kind="checkbox"),
     # --- colour ------------------------------------------------------------
     Control("exposure", "Exposure", 0.0, -2.0, 2.0, 0.05, info="In stops: +1 = twice as bright."),
     Control("contrast", "Contrast", 0.0, -1.0, 1.0, 0.01),
@@ -53,11 +57,8 @@ CONTROLS = [
     # --- detail & finish ----------------------------------------------------
     Control("clarity", "Clarity", 0.0, -1.0, 2.0, 0.05, info="+ crisp local contrast / - soft glow"),
     Control("sharpen", "Sharpen", 0.0, 0.0, 1.0, 0.05, info="Edges only; flat areas and noise are left alone."),
-    Control("vignette", "Vignette", 0.0, -1.0, 1.0, 0.01, info="+ dark corners / - bright corners"),
-    Control("grain", "Film grain", 0.0, 0.0, 1.0, 0.01),
     Control("clarity_radius", "Clarity radius", 4.0, 1.0, 10.0, 0.5,
             info="Small = texture, large = shape and depth."),
-    Control("grain_size", "Grain size", 1.0, 0.5, 3.0, 0.1),
     Control("dither", "Anti-banding", 0.0, 0.0, 1.0, 0.05,
             info="Invisible noise that breaks up banding in skies and gradients."),
     # --- effects -------------------------------------------------------------
@@ -67,6 +68,23 @@ CONTROLS = [
     Control("lut", "LUT (.cube)", "None", kind="lut"),
     Control("lut_strength", "LUT opacity", 1.0, 0.0, 1.0, 0.05),
     Control("lut_dir", "Extra LUT folder", "", kind="text"),
+    # --- overlay: two layers, then what they share ---------------------------
+    *[c for i in (1, 2) for c in (
+        Control(f"overlay_{i}", f"Layer {i}", "None", kind="overlay"),
+        Control(f"ov{i}_blend", "Blend", "Auto", kind="choice", choices=tuple(BLENDS),
+                info="Auto: Normal for transparent PNGs, Screen for textures on black."),
+        Control(f"ov{i}_opacity", "Opacity", 0.8, 0.0, 1.0, 0.05),
+        Control(f"ov{i}_hue", "Colour shift", 0.0, -0.5, 0.5, 0.01,
+                info="Turns the layer's colours round the wheel: 0.5 = opposite colour."),
+        Control(f"ov{i}_zoom", "Zoom", 1.0, 1.0, 3.0, 0.05, info="Crops into the texture: bigger specks, fewer of them."),
+        Control(f"ov{i}_fit", "Fit", "Cover", kind="choice", choices=tuple(FITS),
+                info="Cover keeps the texture's shape and crops; Stretch fills the frame exactly."),
+    )],
+    Control("ov_vary", "Vary with seed", True, kind="checkbox",
+            info="Flip and shift the layers per seed, so a batch does not repeat one texture."),
+    Control("ov_rotate", "Turn to match orientation", True, kind="checkbox",
+            info="A landscape texture on a portrait image is turned 90° instead of cropped."),
+    Control("overlay_dir", "Extra overlay folder", "", kind="text"),
     # --- repair & tools ----------------------------------------------------------
     Control("deblock", "JPEG de-blocking", 0.0, 0.0, 1.0, 0.05),
     Control("dering", "De-ringing", 0.0, 0.0, 1.0, 0.05),
@@ -86,15 +104,18 @@ GROUPS = {
     "en_color": ["exposure", "contrast", "temperature", "tint", "saturation", "vibrance",
                  "shadow_hue", "shadow_tint", "highlight_hue", "highlight_tint", "tone_balance",
                  "slope", "offset", "power"],
-    "en_detail": ["clarity", "sharpen", "vignette", "grain", "clarity_radius", "grain_size", "dither"],
+    "en_detail": ["clarity", "sharpen", "clarity_radius", "dither"],
     "en_splash": ["splash_desat", "splash_hue", "splash_tolerance"],
     "en_lut": ["lut", "lut_strength"],
     "en_repair": ["deblock", "dering"],
+    "en_overlay": [n for i in (1, 2) for n in (f"overlay_{i}", f"ov{i}_blend", f"ov{i}_opacity", f"ov{i}_hue",
+                                               f"ov{i}_zoom", f"ov{i}_fit")] + ["ov_vary", "ov_rotate"],
 }
 GROUP_OF = {n: g for g, names in GROUPS.items() for n in names}
 
 # Not part of the look: never pasted from PNG info.
-LOCAL_ONLY = {"lut_dir", "false_color"}
+LOCAL_ONLY = {"lut_dir", "overlay_dir", "false_color"}
+OVERLAY_CONTROLS = set(GROUPS["en_overlay"]) | {"en_overlay", "overlay_dir"}
 
 
 def coerce(name, value):
@@ -104,8 +125,11 @@ def coerce(name, value):
         if isinstance(value, str):
             return value.strip().lower() in ("1", "true", "yes", "on")
         return bool(value)
-    if c.kind in ("lut", "text"):
+    if c.kind in ("lut", "overlay", "text"):
         return "" if value is None else str(value)
+    if c.kind == "choice":
+        value = str(value)
+        return value if value in c.choices else c.default
     v = float(value)
     return min(max(v, c.minimum), c.maximum)
 

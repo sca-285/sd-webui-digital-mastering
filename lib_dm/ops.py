@@ -235,28 +235,36 @@ def sharpen(x, amount, protect_mask=None):
 
 # ---------------------------------------------------------------- finishing
 
-def vignette(x, amount):
-    _, _, h, w = x.shape
-    yy = torch.linspace(-1.0, 1.0, h, device=x.device, dtype=x.dtype).view(1, 1, h, 1)
-    xx = torch.linspace(-1.0, 1.0, w, device=x.device, dtype=x.dtype).view(1, 1, 1, w)
-    d = torch.sqrt(xx * xx + yy * yy) / math.sqrt(2.0)
-    m = smoothstep(0.35, 1.0, d)
-    if amount > 0:
-        return x * (1.0 - 0.85 * amount * m)
-    return torch.lerp(x, torch.ones_like(x), (-0.6 * amount) * m)
+def hue_rotate(rgb, turns):
+    """Rotate the hue of an RGB tensor by `turns` of the colour wheel (YIQ)."""
+    if abs(turns) < 1e-6:
+        return rgb
+    t = 2.0 * math.pi * turns
+    c, s = math.cos(t), math.sin(t)
+    to_yiq = rgb.new_tensor([[0.299, 0.587, 0.114], [0.596, -0.274, -0.322], [0.211, -0.523, 0.312]])
+    rot = rgb.new_tensor([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
+    m = torch.linalg.inv(to_yiq) @ rot @ to_yiq
+    return torch.einsum("ij,bjhw->bihw", m, rgb).clamp(0.0, 1.0)
 
 
-def film_grain(x, amount, size, generator):
-    """Monochrome, luminance-weighted grain, reproducible from the seed."""
-    b, _, h, w = x.shape
-    gh, gw = max(1, int(round(h / size))), max(1, int(round(w / size)))
-    n = torch.randn((b, 1, gh, gw), generator=generator, device=x.device, dtype=x.dtype)
-    if (gh, gw) != (h, w):
-        n = F.interpolate(n, size=(h, w), mode="bicubic", align_corners=False)
-        n = n / n.std().clamp_min(1e-6)
-    y = luma(x).clamp(0.0, 1.0)
-    weight = 0.35 + 0.65 * (4.0 * y * (1.0 - y))       # strongest in the midtones
-    return x + n * (0.06 * amount) * weight
+def blend_overlay(x, layer, mode, opacity, hue=0.0):
+    """Lay an RGBA layer (from overlay.prepare) over x with a blend mode."""
+    c = hue_rotate(layer[:, :3], hue)
+    a = layer[:, 3:4] * opacity
+    base = x.clamp(0.0, 1.0)
+    if mode == "Screen":
+        out = 1.0 - (1.0 - base) * (1.0 - c)
+    elif mode == "Add":
+        out = base + c
+    elif mode == "Multiply":
+        out = base * c
+    elif mode == "Overlay":
+        out = torch.where(base < 0.5, 2.0 * base * c, 1.0 - 2.0 * (1.0 - base) * (1.0 - c))
+    elif mode == "Soft light":
+        out = (1.0 - 2.0 * c) * base * base + 2.0 * c * base
+    else:  # Normal
+        out = c
+    return torch.lerp(x, out, a)
 
 
 def dither(x, strength, generator):
