@@ -14,9 +14,9 @@ QUICK_START = """
 A preset ticks the sections it uses and sets their sliders; nothing is hidden, and you can keep adjusting after picking one.
 Settings are saved in PNG Info: Send to / Paste restores the exact look.
 
-*With Optical Realism:* this suite is the grade (light, colour, detail, repair).
-Lens, light, depth of field, vignette, grain, dust and flash live in Optical Realism, which runs first,
-so the grade lands on the finished "photograph".
+*With Auto Color Corrector and Optical Realism:* this suite is the grade (light, colour, detail, overlays, repair).
+Auto Color Corrector runs first and only fixes faults (casts, exposure, levels); lens, light, depth of field,
+vignette, grain, dust and flash live in Optical Realism, which runs next. The grade lands last, on the finished "photograph".
 """
 
 TABS = [
