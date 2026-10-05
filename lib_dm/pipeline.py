@@ -15,7 +15,8 @@ Order, and why:
     crop, resize,        output framing; after the blend, which needs the
     output sharpen       original's size
     dither               last of the pixel work: anything after it would amplify it
-    watermark, border    drawn on top, untouched by the grade
+    letterbox, watermark, drawn on top, untouched by the grade
+    border
 
 A stage whose controls are at their defaults is skipped entirely.
 """
@@ -67,7 +68,7 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     wants_protect = s["semantic"] and (s["clarity"] != 0 or s["sharpen"] > 0 or s["splash_desat"] > 0)
     wants_people = (s["en_local"] and (s["subject_light"] != 0 or s["background_light"] != 0
                                        or (s["rad_on_people"] and _active(s, "rad_inside", "rad_outside"))))
-    wants_people = wants_people or (s["en_output"] and s["out_crop_people"] and s["out_aspect"] != "Original")
+    wants_people = wants_people or (s["en_export"] and s["out_crop_people"] and s["out_aspect"] != "Original")
     if mask_fn is not None and (wants_protect or wants_people):
         try:
             person = mask_fn(image).to(x.device, x.dtype)
@@ -132,7 +133,7 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     if s["strength"] < 1.0:
         x = torch.lerp(original, x, s["strength"])
     box = None
-    if s["en_output"]:
+    if s["en_export"]:
         x, box = _output_pixels(x, s, person)
     if s["dither"] > 0:
         x = ops.dither(x, s["dither"], gen)
@@ -144,10 +145,13 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
         if alpha.size != result.size:
             alpha = alpha.resize(result.size, Image.LANCZOS)
         result.putalpha(alpha)
-    if s["en_output"]:
-        # Watermark on the picture itself, then the border round both.
+    # Letterbox bars first, the watermark over the picture, the border round all.
+    if s["en_frame"]:
+        result = out.letterbox(result, s["out_letterbox"])
+    if s["en_export"]:
         result = out.watermark(result, s["wm_text"], s["wm_position"], s["wm_opacity"], s["wm_size"],
                                s.get("wm_font", ""))
+    if s["en_frame"]:
         result = out.border(result, s["out_border"], s["out_border_size"])
     scope = to_image(ops.false_color(x)) if s["false_color"] else None
     return result, scope
@@ -205,7 +209,7 @@ def _output_pixels(x, s, person):
 def is_noop(s) -> bool:
     """True if these settings would not change the image at all."""
     s = effective(s)
-    if s["en_output"] and out.is_active(s):
+    if out.frame_active(s) or out.export_active(s):
         return False
     if s["strength"] <= 0 and s["dither"] <= 0:
         return True

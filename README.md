@@ -1,7 +1,7 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 39 look presets,
+composite. Works on Forge, reForge and Forge Classic (Neo). 51 look presets,
 each with a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
@@ -30,13 +30,13 @@ and grain are in Optical Realism (see below).
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
 | Local | Enable Local · Graduated filter (exposure, direction, reach, softness, colour) · Radial filter (inside, outside, centre on people, position, size, softness) · People / Background light |
 | Overlay | Enable Overlay · Layer 1 and Layer 2 (file + Refresh, blend, opacity, colour shift, zoom, fit) · Both layers (vary with seed, turn to match orientation, extra folder) |
-| Output | Enable Output · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Border (none, white, black, cream, Polaroid) · Watermark (text, position, opacity, size, font file) |
+| Output | Frame: Enable Frame · Letterbox (1.85, 2, 2.39, 2.76:1) · Border (none, white, black, cream, Polaroid). Export: Enable Export · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Watermark (text, position, opacity, size, font file) |
 | Repair & Tools | Restoration · Protect people · Exposure check |
 
 Each section has an **Enable** box (Color, Detail & Finish, Selective Color,
-LUT, Local, Overlay, Output, Restoration); an unticked section is ignored whatever its sliders say.
+LUT, Local, Overlay, Frame, Export, Restoration); an unticked section is ignored whatever its sliders say.
 A preset ticks the sections it uses (their other controls at neutral) and
-unticks the rest; it never touches Intensity, the LUT, the overlays, Local or Output, so you can set
+unticks the rest, Local light and Frame (letterbox, border) included; it never touches Intensity, the LUT, the overlays or Export (crop, size, watermark), so you can set
 Intensity once and flick through presets. The colour sliders show a colour
 wheel on their track.
 
@@ -81,15 +81,26 @@ side, so a look is one preset from each. Pairs that go together:
 | Dusty Night Film | Cinema: Dusty Night or Cinema: Moody Dark |
 | Digital Flash | Mood: Flash Snapshot |
 
+## Auteur presets
+
+Twelve looks after how certain films and edits read: *Chungking Neon*, *Mood for
+Love*, *Fallen Angels*, *2046* and *Happy Together* after Wong Kar-wai's films
+(Christopher Doyle's photography), plus *Hong Kong 90s*, *Saigon Rain*, *Matte
+Street*, *Golden Anamorphic*, *Sickly Thriller*, *Nordic Noir* and *Pastel
+Symmetry*. They are homages built from this suite's own controls, not copies of
+any grade. Most use Local light and a letterbox; pair them with an Optical
+Realism preset for grain, halation and glow (e.g. *Night City Glow* with
+*Chungking Neon*, *Film Camera 35mm* with *Mood for Love*).
+
 ## Order
 
 restoration -> exposure/WB (linear light) -> CDL -> contrast -> saturation ->
 split toning -> local light -> LUT -> selective colour -> clarity -> sharpen ->
 overlay layers -> Intensity -> crop -> resize -> output sharpening -> dither ->
-watermark -> border. Overlays go on after sharpening, so their specks are never
+letterbox -> watermark -> border. Overlays go on after sharpening, so their specks are never
 sharpened. The size-changing output steps follow Intensity, which blends with
 the original at its own size. Dither is the last pixel step so that nothing
-amplifies it; watermark and border are drawn on top.
+amplifies it; letterbox, watermark and border are drawn on top.
 
 ## PNG info
 
@@ -125,7 +136,7 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 39 looks, each listing only what it changes
+lib_dm/presets.py              the 51 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
