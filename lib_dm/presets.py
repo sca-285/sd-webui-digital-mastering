@@ -81,6 +81,10 @@ _P = {
     "Cinema: Dusty Night": dict(
         exposure=-0.35, offset=-0.01, contrast=0.25, saturation=1.05, temperature=-0.10, tint=-0.05,
         shadow_hue=0.52, shadow_tint=0.40, highlight_hue=0.07, highlight_tint=0.20),
+    "Cinema: Day for Night": dict(
+        exposure=-2.00, slope=0.85, power=1.20, offset=-0.02, temperature=-0.40, tint=-0.08,
+        contrast=0.30, saturation=0.70, shadow_hue=0.60, shadow_tint=0.45, highlight_hue=0.55,
+        highlight_tint=0.10),
     "Cinema: Desert Heat": dict(
         temperature=0.45, contrast=0.20, saturation=1.10, highlight_hue=0.10,
         highlight_tint=0.30, clarity=0.20),
@@ -161,6 +165,7 @@ DESCRIPTIONS = {
     "Cinema: Digital Green": "Cold green cast of a digital world, Matrix-style.",
     "Cinema: Neo-Noir Blue": "Cold blue, little colour, high contrast.",
     "Cinema: Dusty Night": "Dark night grade: teal-blue shadows, warm lights, deep contrast.",
+    "Cinema: Day for Night": "Daylight graded to moonlit night: dark, blue, low colour. No lights come on.",
     "Cinema: Desert Heat": "Hot amber-orange and saturated: desert, high summer.",
     "Mood: Golden Hour": "Golden late-afternoon sun with slightly violet shadows.",
     "Mood: Blue Hour": "Blue dusk with a pink-violet touch in the highlights.",

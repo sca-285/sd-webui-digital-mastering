@@ -1,7 +1,7 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 38 look presets,
+composite. Works on Forge, reForge and Forge Classic (Neo). 39 look presets,
 each with a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
@@ -119,7 +119,7 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 38 looks, each listing only what it changes
+lib_dm/presets.py              the 39 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
