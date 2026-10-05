@@ -112,6 +112,15 @@ sharpened. The size-changing output steps follow Intensity, which blends with
 the original at its own size. Dither is the last pixel step so that nothing
 amplifies it; letterbox, watermark and border are drawn on top.
 
+## X/Y/Z plot
+
+Axes for the X/Y/Z plot script, under `[DM]`: Preset, Intensity, LUT, Overlay
+layer 1, Overlay 1 opacity, Exposure, Contrast, Saturation, Temperature. A cell
+that sets any of them switches the suite on for that cell, so it can stay off
+in the panel; a Preset axis is applied first, the way the picker applies it,
+then the other axes on top. Pair a `[DM] Preset` axis with Optical Realism's
+`[OR] Preset` to compare looks side by side.
+
 ## PNG info
 
 One entry, only the non-default values:
@@ -153,6 +162,7 @@ lib_dm/ops.py                  the image operations, pure torch
 lib_dm/lut.py                  .cube discovery and parsing
 lib_dm/overlay.py              overlay discovery, loading and fitting
 lib_dm/output.py               crop, resize, output sharpening, border, watermark
+lib_dm/xyz.py                  X/Y/Z plot axes
 lib_dm/segment.py              SegFormer-B0 person mask
 lib_dm/reference.py            the folded preset reference
 preset_reference.jpg           the preset reference picture

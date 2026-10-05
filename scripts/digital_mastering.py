@@ -6,16 +6,16 @@ import traceback
 import zlib
 
 import gradio as gr
-from modules import devices, scripts, shared
+from modules import devices, script_callbacks, scripts, shared
 from modules.ui_components import InputAccordion
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if EXTENSION_ROOT not in sys.path:
     sys.path.insert(0, EXTENSION_ROOT)
 
-from lib_dm import lut, overlay, segment  # noqa: E402
+from lib_dm import lut, overlay, segment, xyz  # noqa: E402
 from lib_dm.controls import (  # noqa: E402
-    BY_NAME, INFOTEXT_KEY, LOCAL_ONLY, NAMES, from_infotext, settings, to_infotext,
+    BY_NAME, GROUP_OF, INFOTEXT_KEY, LOCAL_ONLY, NAMES, coerce, from_infotext, settings, to_infotext,
 )
 from lib_dm.layout import HUE_SLIDERS, QUICK_START, TABS as LAYOUT  # noqa: E402
 from lib_dm.pipeline import is_noop, master  # noqa: E402
@@ -38,6 +38,28 @@ def overlay_folders(extra=""):
 
 def overlay_choices(extra=""):
     return ["None", *overlay.find_overlays(*overlay_folders(extra))]
+
+
+XYZ_ATTR = "_dm_xyz"
+
+
+def _register_xyz():
+    xyz.register("DM", XYZ_ATTR, [
+        ("Preset", str, "preset", lambda: list(PRESETS)),
+        ("Intensity", float, "strength", None),
+        ("LUT", str, "lut", lambda: lut_choices()),
+        ("Overlay layer 1", str, "overlay_1", lambda: overlay_choices()),
+        ("Overlay 1 opacity", float, "ov1_opacity", None),
+        ("Exposure", float, "exposure", None),
+        ("Contrast", float, "contrast", None),
+        ("Saturation", float, "saturation", None),
+        ("Temperature", float, "temperature", None),
+    ])
+
+
+# Once the scripts are loaded, before the UI is built: the X/Y/Z plot reads its
+# axis list when it builds its own panel.
+script_callbacks.on_before_ui(_register_xyz)
 
 
 def _image_seed(p, image):
@@ -197,9 +219,12 @@ class Script(scripts.Script):
     # After the composite, so an "only masked" inpaint is graded as a whole
     # image instead of leaving a seam at the crop edge.
     def postprocess_image_after_composite(self, p, pp, enabled, *values):
-        if not enabled or pp.image is None:
+        axis = xyz.overrides(p, XYZ_ATTR)
+        if not (enabled or axis) or pp.image is None:
             return
         s = settings(dict(zip(NAMES, values)))
+        if axis:
+            s = xyz.merged(s, axis, coerce, BY_NAME, GROUP_OF, PRESETS, NOT_IN_PRESETS)
         if is_noop(s) and not s["false_color"]:
             return
 
