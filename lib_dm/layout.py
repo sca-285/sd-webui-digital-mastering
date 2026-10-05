@@ -140,11 +140,11 @@ The overlays are textures laid on top, the same on every image. For effects work
     {
         "title": "Output",
         "guide": """
-**Ready to post or print.** Two parts, each with its own Enable box, and both run last.
+**Ready to post or print.** Two parts, each with its own Enable box, and both run last. Presets never touch this tab: what you set here stays when you switch looks.
 
-**Frame** is part of a look, so presets may set it: **Letterbox** lays black cinema bars over the top and bottom (the picture keeps its size; 2.39:1 is the widescreen "scope" shape), **Border** frames the picture in white, black, cream or Polaroid.
+**Frame**: **Letterbox** lays black cinema bars over the top and bottom (the picture keeps its size; 2.39:1 is the widescreen "scope" shape), **Border** frames the picture in white, black, cream or Polaroid.
 
-**Export** belongs to this one picture, so presets never touch it:
+**Export**:
 
 | Step | What it does |
 |---|---|
