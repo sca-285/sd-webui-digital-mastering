@@ -90,6 +90,28 @@ To keep *people* in colour instead, turn on **Protect people** in *Repair & Tool
         ],
     },
     {
+        "title": "Local",
+        "guide": """
+**Light in one part of the picture**, the way a photographer dodges and burns. Tick **Enable Local**. Everything here is exposure in stops (+1 = twice as bright), worked in linear light.
+
+**Graduated filter**: like a grad ND on the lens. *Filter comes from* 0 = top (a sky), 180 = bottom; *reaches* = where it fades out; a negative value darkens. *Filter colour* tints that side, e.g. orange 0.08 for a sunset sky.
+
+**Radial filter**: an ellipse; *inside* lifts or darkens the centre, *outside* the rest. A slightly negative *outside* draws the eye in. **Centre on people** puts it on the detected subject.
+
+**People / Background light**: lift the subject, darken the background, or both, with people detection (SegFormer-B0, ~15 MB, downloaded on first use).
+
+Presets never change this tab: local light belongs to one picture, not to a look.
+""",
+        "sections": [
+            (None, ["en_local"]),
+            ("Graduated filter", ["grad_stops", "grad_angle", "grad_position", "grad_softness",
+                                  "grad_hue", "grad_tint"]),
+            ("Radial filter", ["rad_inside", "rad_outside", "rad_on_people", "rad_x", "rad_y",
+                               "rad_size", "rad_softness"]),
+            ("People / Background", ["subject_light", "background_light"]),
+        ],
+    },
+    {
         "title": "Overlay",
         "guide": """
 **Texture layers on top of the grade**: light leaks, dust, bokeh, prism flares, scratches. Tick **Enable Overlay**, then pick a file for **Layer 1** (and **Layer 2** to stack two).
@@ -114,6 +136,29 @@ The overlays are textures laid on top, the same on every image. For effects work
             ("Both layers", ["ov_vary", "ov_rotate", "overlay_dir"]),
         ],
         "reference": "overlay_reference.jpg",
+    },
+    {
+        "title": "Output",
+        "guide": """
+**Ready to post or print.** Tick **Enable Output**. These steps change the picture's size, so they run last.
+
+| Step | What it does |
+|---|---|
+| Crop to | Cuts the largest window of that shape: 4:5 feed, 9:16 Story / Reels, 1:1, 3:2 print. *Centre X / Y* move it; **Keep people in the crop** centres it on the subject |
+| Resize long edge | Exact output size, e.g. 1080 or 1350 for a feed. 0 = keep |
+| Output sharpening | A little crispness back after resizing |
+| Border | White, black, cream, or Polaroid (deeper bottom strip), width as a share of the frame |
+| Watermark | Your name or handle, white with a soft shadow. A font file path (.ttf / .otf) is optional |
+
+Hires fix and upscalers run before this, so crop and resize apply to the final picture. Presets never change this tab.
+""",
+        "sections": [
+            (None, ["en_output"]),
+            ("Crop", ["out_aspect", "out_crop_people", "out_crop_x", "out_crop_y"]),
+            ("Size", ["out_long_edge", "out_sharpen"]),
+            ("Border", ["out_border", "out_border_size"]),
+            ("Watermark", ["wm_text", "wm_position", "wm_opacity", "wm_size", "wm_font"]),
+        ],
     },
     {
         "title": "Repair & Tools",

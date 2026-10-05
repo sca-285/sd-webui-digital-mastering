@@ -1,0 +1,116 @@
+"""Output: the last steps before the picture leaves, the way it would be
+exported for a feed or a print: crop to an aspect, resize, sharpen for that
+size, a border, a watermark."""
+
+from __future__ import annotations
+
+import torch.nn.functional as F
+from PIL import Image, ImageDraw, ImageFont
+
+ASPECTS = ["Original", "1:1", "4:5", "3:4", "2:3", "9:16", "5:4", "4:3", "3:2", "16:9", "21:9"]
+BORDERS = ["None", "White", "Black", "Cream", "Polaroid"]
+POSITIONS = ["Bottom right", "Bottom left", "Bottom centre", "Top right", "Top left", "Centre"]
+
+_BORDER_RGB = {"White": (255, 255, 255), "Black": (0, 0, 0), "Cream": (243, 236, 222),
+               "Polaroid": (246, 244, 238)}
+
+
+def crop_box(w, h, aspect, cx=0.5, cy=0.5):
+    """(left, top, right, bottom) of the largest `aspect` window in w x h,
+    centred as near (cx, cy) as the frame allows; None for 'Original'."""
+    if aspect not in ASPECTS or aspect == "Original":
+        return None
+    a, b = (float(v) for v in aspect.split(":"))
+    target = a / b
+    if w / h > target:
+        cw, ch = int(round(h * target)), h
+    else:
+        cw, ch = w, int(round(w / target))
+    if (cw, ch) == (w, h):
+        return None
+    left = min(max(int(round(cx * w - cw / 2)), 0), w - cw)
+    top = min(max(int(round(cy * h - ch / 2)), 0), h - ch)
+    return left, top, left + cw, top + ch
+
+
+def crop(x, box):
+    left, top, right, bottom = box
+    return x[:, :, top:bottom, left:right]
+
+
+def resize_long_edge(x, long_edge):
+    """Resize so the longer side is long_edge px (0 = keep)."""
+    h, w = x.shape[-2:]
+    if long_edge <= 0 or max(h, w) == long_edge:
+        return x
+    s = long_edge / max(h, w)
+    size = (max(1, int(round(h * s))), max(1, int(round(w * s))))
+    return F.interpolate(x, size=size, mode="bicubic", align_corners=False,
+                         antialias=s < 1.0).clamp(0.0, 1.0)
+
+
+def _font(size, path=""):
+    for candidate in (path, "DejaVuSans.ttf", "arial.ttf", "Arial.ttf"):
+        if candidate:
+            try:
+                return ImageFont.truetype(candidate, size)
+            except (OSError, ValueError):
+                pass
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:                     # Pillow < 10.1: bitmap font, one size
+        return ImageFont.load_default()
+
+
+def border(image: Image.Image, kind, size):
+    """Frame the picture. size: border width as a share of the shorter side.
+    Polaroid leaves a deeper strip at the bottom."""
+    if kind not in _BORDER_RGB or size <= 0:
+        return image
+    w, h = image.size
+    b = max(1, int(round(min(w, h) * size)))
+    bottom = b * 4 if kind == "Polaroid" else b
+    out = Image.new(image.mode, (w + 2 * b, h + b + bottom),
+                    _BORDER_RGB[kind] + ((255,) if image.mode == "RGBA" else ()))
+    out.paste(image, (b, b))
+    return out
+
+
+def watermark(image: Image.Image, text, position="Bottom right", opacity=0.6, size=0.03, font_path=""):
+    """Text on the picture: white with a soft shadow, so it reads on light
+    and dark alike. size: text height as a share of the shorter side."""
+    text = (text or "").strip()
+    if not text or opacity <= 0:
+        return image
+    w, h = image.size
+    font = _font(max(8, int(round(min(w, h) * size))), font_path)
+    layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    l, t, r, b = d.textbbox((0, 0), text, font=font)
+    tw, th = r - l, b - t
+    m = int(round(min(w, h) * 0.03))
+    x = {"left": m, "right": w - tw - m}.get(position.split()[-1], (w - tw) // 2)
+    y = m if position.startswith("Top") else (h - th) // 2 if position == "Centre" else h - th - m
+    x, y = x - l, y - t
+    a = int(round(255 * min(max(opacity, 0.0), 1.0)))
+    off = max(1, int(round(th * 0.06)))
+    d.text((x + off, y + off), text, font=font, fill=(0, 0, 0, a // 2))
+    d.text((x, y), text, font=font, fill=(255, 255, 255, a))
+    base = image.convert("RGBA")
+    base.alpha_composite(layer)
+    return base if image.mode == "RGBA" else base.convert(image.mode)
+
+
+def unsharp(x, amount, radius_px):
+    """Output sharpening: a small unsharp mask on luminance, for the export size."""
+    from .ops import gaussian_blur, luma
+    if amount <= 0:
+        return x
+    y = luma(x)
+    detail = y - gaussian_blur(y, max(0.3, radius_px))
+    return (x + detail * (1.5 * amount)).clamp(0.0, 1.0)
+
+
+def is_active(s):
+    return (s["out_aspect"] != "Original" or s["out_long_edge"] > 0 or s["out_sharpen"] > 0
+            or s["out_border"] != "None" or bool((s["wm_text"] or "").strip()))

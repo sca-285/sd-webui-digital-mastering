@@ -1,7 +1,7 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 38 look presets,
+composite. Works on Forge, reForge and Forge Classic (Neo). 39 look presets,
 each with a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
@@ -16,7 +16,7 @@ and grain are in Optical Realism (see below).
     [▦ Preset reference]           <- click to unfold the picture above
     Intensity  ------o---          <- how much of the whole grade, 0 = original
     > Quick start                  <- (closed)
-    [ Color | Detail & Finish | Effects | Overlay | Repair & Tools ]
+    [ Color | Detail & Finish | Effects | Local | Overlay | Output | Repair & Tools ]
       > Guide                      <- guide for this tab (closed)
       Section title
         [x] Enable ...
@@ -28,13 +28,15 @@ and grain are in Optical Realism (see below).
 | Color | Enable Color · Light (exposure, contrast) · White balance · Colour (saturation, vibrance) · Split toning · CDL |
 | Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen) · Finish (anti-banding) |
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
+| Local | Enable Local · Graduated filter (exposure, direction, reach, softness, colour) · Radial filter (inside, outside, centre on people, position, size, softness) · People / Background light |
 | Overlay | Enable Overlay · Layer 1 and Layer 2 (file + Refresh, blend, opacity, colour shift, zoom, fit) · Both layers (vary with seed, turn to match orientation, extra folder) |
+| Output | Enable Output · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Border (none, white, black, cream, Polaroid) · Watermark (text, position, opacity, size, font file) |
 | Repair & Tools | Restoration · Protect people · Exposure check |
 
 Each section has an **Enable** box (Color, Detail & Finish, Selective Color,
-LUT, Overlay, Restoration); an unticked section is ignored whatever its sliders say.
+LUT, Local, Overlay, Output, Restoration); an unticked section is ignored whatever its sliders say.
 A preset ticks the sections it uses (their other controls at neutral) and
-unticks the rest; it never touches Intensity, the LUT or the overlays, so you can set
+unticks the rest; it never touches Intensity, the LUT, the overlays, Local or Output, so you can set
 Intensity once and flick through presets. The colour sliders show a colour
 wheel on their track.
 
@@ -82,8 +84,12 @@ side, so a look is one preset from each. Pairs that go together:
 ## Order
 
 restoration -> exposure/WB (linear light) -> CDL -> contrast -> saturation ->
-split toning -> LUT -> selective colour -> clarity -> sharpen -> overlay layers ->
-dither. Overlays go on after sharpening, so their specks are never sharpened. Dither runs last so that no later step amplifies it.
+split toning -> local light -> LUT -> selective colour -> clarity -> sharpen ->
+overlay layers -> Intensity -> crop -> resize -> output sharpening -> dither ->
+watermark -> border. Overlays go on after sharpening, so their specks are never
+sharpened. The size-changing output steps follow Intensity, which blends with
+the original at its own size. Dither is the last pixel step so that nothing
+amplifies it; watermark and border are drawn on top.
 
 ## PNG info
 
@@ -103,7 +109,7 @@ they moved to Optical Realism are ignored.
 - Dither is seeded from the image's seed: the same seed gives the same result.
 - **Protect people** uses SegFormer-B0 (about 15 MB, downloaded on first use).
   The model is parked on the CPU between jobs.
-- **Overlays**: 15 ship in `overlays/` (see `overlay_reference.jpg`, also
+- **Overlays**: 14 ship in `overlays/` (see `overlay_reference.jpg`, also
   folded in the Overlay tab). Add your own PNG / WebP / JPEG to
   `models/overlays` or name another folder, then press **Refresh**; a file
   with the same name as a shipped one replaces it. Blend *Auto* uses Normal for
@@ -119,12 +125,13 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 38 looks, each listing only what it changes
+lib_dm/presets.py              the 39 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
 lib_dm/lut.py                  .cube discovery and parsing
 lib_dm/overlay.py              overlay discovery, loading and fitting
+lib_dm/output.py               crop, resize, output sharpening, border, watermark
 lib_dm/segment.py              SegFormer-B0 person mask
 lib_dm/reference.py            the folded preset reference
 preset_reference.jpg           the preset reference picture
@@ -137,7 +144,7 @@ style.css                      colour-wheel sliders, section titles, reference b
 
 Overlays: *Bokeh - Lavender*, *Bokeh - Pastel*, *Film Dirt - Hairs & Lines*,
 *Light Leak - Fire*, *Light Leak - Yellow*, *Prism Flare*, *Scratches - Cracked*
-and *Sparkle Dust - Orange* are the author's own; the other seven were
+and *Sparkle Dust - Orange* are the author's own; the other six were
 generated in code for this extension.
 
 Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit-image's sample data:

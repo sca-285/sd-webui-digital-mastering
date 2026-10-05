@@ -179,8 +179,10 @@ class Script(scripts.Script):
         if c.kind == "checkbox":
             return gr.Checkbox(label=c.label, value=c.default, elem_id=eid, info=info)
         if c.kind == "text":
-            hint = ("e.g. D:\\Overlays  (models/overlays is always searched)" if c.name == "overlay_dir"
-                    else "e.g. D:\\LUTs  (models/LUTs is always searched)")
+            hint = {"overlay_dir": "e.g. D:\\Overlays  (models/overlays is always searched)",
+                    "lut_dir": "e.g. D:\\LUTs  (models/LUTs is always searched)",
+                    "wm_text": "e.g. @yourname",
+                    "wm_font": "optional, e.g. C:\\Windows\\Fonts\\arialbd.ttf"}.get(c.name, "")
             return gr.Textbox(label=c.label, value=c.default, elem_id=eid, placeholder=hint)
         if c.kind == "lut":
             return gr.Dropdown(label=c.label, choices=lut_choices(), value="None", elem_id=eid)

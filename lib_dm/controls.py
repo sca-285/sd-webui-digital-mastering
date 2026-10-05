@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .output import ASPECTS, BORDERS, POSITIONS
 from .overlay import BLENDS, FITS
 
 
@@ -39,6 +40,8 @@ CONTROLS = [
     Control("en_lut", "Enable LUT", False, kind="checkbox"),
     Control("en_repair", "Enable Restoration", False, kind="checkbox"),
     Control("en_overlay", "Enable Overlay", False, kind="checkbox"),
+    Control("en_local", "Enable Local", False, kind="checkbox"),
+    Control("en_output", "Enable Output", False, kind="checkbox"),
     # --- colour ------------------------------------------------------------
     Control("exposure", "Exposure", 0.0, -2.0, 2.0, 0.05, info="In stops: +1 = twice as bright."),
     Control("contrast", "Contrast", 0.0, -1.0, 1.0, 0.01),
@@ -85,6 +88,49 @@ CONTROLS = [
     Control("ov_rotate", "Turn to match orientation", True, kind="checkbox",
             info="A landscape texture on a portrait image is turned 90° instead of cropped."),
     Control("overlay_dir", "Extra overlay folder", "", kind="text"),
+    # --- local: graduated filter, radial filter, people / background ----------
+    Control("grad_stops", "Graduated filter", 0.0, -2.0, 2.0, 0.05,
+            info="Exposure in stops on the filtered side: - darkens a sky, + lifts a dark foreground."),
+    Control("grad_angle", "Filter comes from", 0.0, 0.0, 360.0, 5.0,
+            info="Degrees: 0 top, 90 right, 180 bottom, 270 left."),
+    Control("grad_position", "Filter reaches", 0.45, 0.0, 1.0, 0.01,
+            info="Where the transition sits, from the filtered edge (0) across the frame (1)."),
+    Control("grad_softness", "Filter softness", 0.40, 0.02, 1.0, 0.01),
+    Control("grad_hue", "Filter colour", 0.08, 0.0, 1.0, 0.01),
+    Control("grad_tint", "Filter colour amount", 0.0, 0.0, 1.0, 0.01,
+            info="A coloured grad: orange for a sunset sky, blue for a cold one."),
+    Control("rad_inside", "Radial: inside", 0.0, -1.0, 1.0, 0.05, info="Exposure in stops inside the ellipse."),
+    Control("rad_outside", "Radial: outside", 0.0, -2.0, 1.0, 0.05,
+            info="Exposure in stops outside it: - pulls the eye to the centre."),
+    Control("rad_x", "Radial centre X", 0.5, 0.0, 1.0, 0.01),
+    Control("rad_y", "Radial centre Y", 0.45, 0.0, 1.0, 0.01),
+    Control("rad_size", "Radial size", 0.6, 0.1, 1.5, 0.01, info="Radius as a share of the shorter side."),
+    Control("rad_softness", "Radial softness", 0.5, 0.02, 1.0, 0.01),
+    Control("rad_on_people", "Centre the radial on people (AI)", False, kind="checkbox",
+            info="Finds the people and centres the ellipse on them; X / Y are then ignored."),
+    Control("subject_light", "People: light", 0.0, -1.0, 1.0, 0.05,
+            info="Exposure in stops on detected people (dodge / burn the subject). Uses people detection."),
+    Control("background_light", "Background: light", 0.0, -2.0, 1.0, 0.05,
+            info="Exposure in stops on everything else. Uses people detection."),
+    # --- output: crop, size, sharpening, border, watermark -------------------
+    Control("out_aspect", "Crop to", "Original", kind="choice", choices=tuple(ASPECTS),
+            info="4:5 Instagram feed, 9:16 Story / Reels, 1:1 square, 3:2 print..."),
+    Control("out_crop_x", "Crop centre X", 0.5, 0.0, 1.0, 0.01),
+    Control("out_crop_y", "Crop centre Y", 0.5, 0.0, 1.0, 0.01),
+    Control("out_crop_people", "Keep people in the crop (AI)", False, kind="checkbox",
+            info="Centres the crop on the detected people; X / Y are then ignored."),
+    Control("out_long_edge", "Resize long edge (px)", 0.0, 0.0, 4096.0, 8.0,
+            info="0 = keep. 1080 / 1350 for a feed, 2048 for most sites."),
+    Control("out_sharpen", "Output sharpening", 0.0, 0.0, 1.0, 0.05,
+            info="A touch of sharpening for the final size, after any resize."),
+    Control("out_border", "Border", "None", kind="choice", choices=tuple(BORDERS)),
+    Control("out_border_size", "Border width", 0.04, 0.005, 0.15, 0.005,
+            info="As a share of the shorter side. Polaroid has a deeper bottom strip."),
+    Control("wm_text", "Watermark", "", kind="text"),
+    Control("wm_position", "Watermark position", "Bottom right", kind="choice", choices=tuple(POSITIONS)),
+    Control("wm_opacity", "Watermark opacity", 0.6, 0.0, 1.0, 0.05),
+    Control("wm_size", "Watermark size", 0.03, 0.01, 0.10, 0.005, info="Text height as a share of the shorter side."),
+    Control("wm_font", "Watermark font file", "", kind="text"),
     # --- repair & tools ----------------------------------------------------------
     Control("deblock", "JPEG de-blocking", 0.0, 0.0, 1.0, 0.05),
     Control("dering", "De-ringing", 0.0, 0.0, 1.0, 0.05),
@@ -108,14 +154,22 @@ GROUPS = {
     "en_splash": ["splash_desat", "splash_hue", "splash_tolerance"],
     "en_lut": ["lut", "lut_strength"],
     "en_repair": ["deblock", "dering"],
+    "en_local": ["grad_stops", "grad_angle", "grad_position", "grad_softness", "grad_hue", "grad_tint",
+                 "rad_inside", "rad_outside", "rad_x", "rad_y", "rad_size", "rad_softness", "rad_on_people",
+                 "subject_light", "background_light"],
+    "en_output": ["out_aspect", "out_crop_x", "out_crop_y", "out_crop_people", "out_long_edge", "out_sharpen",
+                  "out_border", "out_border_size", "wm_text", "wm_position", "wm_opacity", "wm_size"],
     "en_overlay": [n for i in (1, 2) for n in (f"overlay_{i}", f"ov{i}_blend", f"ov{i}_opacity", f"ov{i}_hue",
                                                f"ov{i}_zoom", f"ov{i}_fit")] + ["ov_vary", "ov_rotate"],
 }
 GROUP_OF = {n: g for g, names in GROUPS.items() for n in names}
 
 # Not part of the look: never pasted from PNG info.
-LOCAL_ONLY = {"lut_dir", "overlay_dir", "false_color"}
+LOCAL_ONLY = {"lut_dir", "overlay_dir", "wm_font", "false_color"}
 OVERLAY_CONTROLS = set(GROUPS["en_overlay"]) | {"en_overlay", "overlay_dir"}
+# Framing and local work belong to one picture, not to a look: presets leave them be.
+PER_IMAGE_CONTROLS = (set(GROUPS["en_local"]) | set(GROUPS["en_output"])
+                      | {"en_local", "en_output", "wm_font"})
 
 
 def coerce(name, value):
@@ -126,7 +180,11 @@ def coerce(name, value):
             return value.strip().lower() in ("1", "true", "yes", "on")
         return bool(value)
     if c.kind in ("lut", "overlay", "text"):
-        return "" if value is None else str(value)
+        value = "" if value is None else str(value)
+        if name == "wm_text":
+            # PNG info is "k=v; k=v": keep the separators and quotes out.
+            value = "".join(ch for ch in value if ch not in ';="\n').strip()[:80]
+        return value
     if c.kind == "choice":
         value = str(value)
         return value if value in c.choices else c.default
