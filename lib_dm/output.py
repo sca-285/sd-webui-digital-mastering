@@ -1,6 +1,6 @@
-"""Output: the last steps before the picture leaves, the way it would be
-exported for a feed or a print: crop to an aspect, resize, sharpen for that
-size, a border, a watermark."""
+"""Output: the last steps before the picture leaves. Frame (letterbox,
+border) can be part of a look; export (crop, resize, sharpening, watermark)
+belongs to one picture."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ASPECTS = ["Original", "1:1", "4:5", "3:4", "2:3", "9:16", "5:4", "4:3", "3:2", "16:9", "21:9"]
 BORDERS = ["None", "White", "Black", "Cream", "Polaroid"]
+LETTERBOXES = ["None", "1.85:1", "2:1", "2.39:1", "2.76:1"]
 POSITIONS = ["Bottom right", "Bottom left", "Bottom centre", "Top right", "Top left", "Centre"]
 
 _BORDER_RGB = {"White": (255, 255, 255), "Black": (0, 0, 0), "Cream": (243, 236, 222),
@@ -62,6 +63,25 @@ def _font(size, path=""):
         return ImageFont.load_default()
 
 
+def letterbox(image: Image.Image, ratio):
+    """Black bars over the top and bottom so the visible picture has a cinema
+    shape; the frame keeps its size. Nothing happens if the picture is already
+    that wide or wider."""
+    if ratio not in LETTERBOXES or ratio == "None":
+        return image
+    a, b = (float(v) for v in ratio.split(":"))
+    w, h = image.size
+    bar = int(round((h - w * b / a) / 2))
+    if bar <= 0:
+        return image
+    out = image.copy()
+    d = ImageDraw.Draw(out)
+    black = (0, 0, 0, 255) if image.mode == "RGBA" else (0, 0, 0)
+    d.rectangle((0, 0, w, bar - 1), fill=black)
+    d.rectangle((0, h - bar, w, h), fill=black)
+    return out
+
+
 def border(image: Image.Image, kind, size):
     """Frame the picture. size: border width as a share of the shorter side.
     Polaroid leaves a deeper strip at the bottom."""
@@ -111,6 +131,10 @@ def unsharp(x, amount, radius_px):
     return (x + detail * (1.5 * amount)).clamp(0.0, 1.0)
 
 
-def is_active(s):
-    return (s["out_aspect"] != "Original" or s["out_long_edge"] > 0 or s["out_sharpen"] > 0
-            or s["out_border"] != "None" or bool((s["wm_text"] or "").strip()))
+def frame_active(s):
+    return s["en_frame"] and (s["out_letterbox"] != "None" or s["out_border"] != "None")
+
+
+def export_active(s):
+    return s["en_export"] and (s["out_aspect"] != "Original" or s["out_long_edge"] > 0
+                               or s["out_sharpen"] > 0 or bool((s["wm_text"] or "").strip()))

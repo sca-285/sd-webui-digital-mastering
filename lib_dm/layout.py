@@ -100,7 +100,7 @@ To keep *people* in colour instead, turn on **Protect people** in *Repair & Tool
 
 **People / Background light**: lift the subject, darken the background, or both, with people detection (SegFormer-B0, ~15 MB, downloaded on first use).
 
-Presets never change this tab: local light belongs to one picture, not to a look.
+Presets may set this tab (a portrait preset lifts the subject, a landscape one darkens the sky); picking a preset replaces what is here.
 """,
         "sections": [
             (None, ["en_local"]),
@@ -140,24 +140,26 @@ The overlays are textures laid on top, the same on every image. For effects work
     {
         "title": "Output",
         "guide": """
-**Ready to post or print.** Tick **Enable Output**. These steps change the picture's size, so they run last.
+**Ready to post or print.** Two parts, each with its own Enable box, and both run last.
+
+**Frame** is part of a look, so presets may set it: **Letterbox** lays black cinema bars over the top and bottom (the picture keeps its size; 2.39:1 is the widescreen "scope" shape), **Border** frames the picture in white, black, cream or Polaroid.
+
+**Export** belongs to this one picture, so presets never touch it:
 
 | Step | What it does |
 |---|---|
 | Crop to | Cuts the largest window of that shape: 4:5 feed, 9:16 Story / Reels, 1:1, 3:2 print. *Centre X / Y* move it; **Keep people in the crop** centres it on the subject |
 | Resize long edge | Exact output size, e.g. 1080 or 1350 for a feed. 0 = keep |
 | Output sharpening | A little crispness back after resizing |
-| Border | White, black, cream, or Polaroid (deeper bottom strip), width as a share of the frame |
 | Watermark | Your name or handle, white with a soft shadow. A font file path (.ttf / .otf) is optional |
 
-Hires fix and upscalers run before this, so crop and resize apply to the final picture. Presets never change this tab.
+Hires fix and upscalers run before this, so crop and resize apply to the final picture.
 """,
         "sections": [
-            (None, ["en_output"]),
-            ("Crop", ["out_aspect", "out_crop_people", "out_crop_x", "out_crop_y"]),
-            ("Size", ["out_long_edge", "out_sharpen"]),
-            ("Border", ["out_border", "out_border_size"]),
-            ("Watermark", ["wm_text", "wm_position", "wm_opacity", "wm_size", "wm_font"]),
+            ("Frame", ["en_frame", "out_letterbox", "out_border", "out_border_size"]),
+            ("Export: crop", ["en_export", "out_aspect", "out_crop_people", "out_crop_x", "out_crop_y"]),
+            ("Export: size", ["out_long_edge", "out_sharpen"]),
+            ("Export: watermark", ["wm_text", "wm_position", "wm_opacity", "wm_size", "wm_font"]),
         ],
     },
     {
