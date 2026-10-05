@@ -1,7 +1,7 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 51 look presets,
+composite. Works on Forge, reForge and Forge Classic (Neo). 56 look presets,
 each with a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
@@ -70,11 +70,11 @@ side, so a look is one preset from each. Pairs that go together:
 | Street 35mm f/5.6 | Natural: Vivid Pop or Film: Cool Slide Stock |
 | Macro Close-up | Natural: HDR Detail |
 | Vintage Lens | Film: Faded Vintage or Film: Instant Photo |
-| Film Camera 35mm | Film: Warm Portrait Stock |
+| Film Camera 35mm | Film: Portra Golden or Film: Olive Signature |
 | Heavy Film Grain | B&W: Classic Silver or B&W: Hard Noir |
 | Pro-Mist Cinema | Cinema: Teal & Orange |
 | Anamorphic Flare | Cinema: Blockbuster |
-| Night City Glow | Mood: Cyberpunk Neon |
+| Night City Glow | Mood: Cyberpunk Neon or Film: Red Neon Night |
 | Landscape Aerial Haze | Mood: Golden Hour |
 | Foggy Morning | Natural: Soft Matte or Mood: Blue Hour |
 | Backlit Rim Light | Mood: Golden Hour |
@@ -91,6 +91,16 @@ Symmetry*. They are homages built from this suite's own controls, not copies of
 any grade. Most use Local light and a letterbox; pair them with an Optical
 Realism preset for grain, halation and glow (e.g. *Night City Glow* with
 *Chungking Neon*, *Film Camera 35mm* with *Mood for Love*).
+
+## Film presets
+
+*Portra Golden*, *Olive Signature*, *Tungsten Amber*, *Emerald*, *Travel Ektar*
+and *Red Neon Night* follow the colour of contemporary editorial film photography,
+measured rather than guessed: olive-to-amber shadows instead of the usual teal,
+cream highlights, whites held a little below clipping, blacks just lifted.
+*Lavender Dusk* covers the pink-sky evenings of the same style. Pair them with
+Optical Realism's *Film Camera 35mm* or *Heavy Film Grain* for the grain and
+halation that finish the look.
 
 ## Order
 
@@ -136,7 +146,7 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 51 looks, each listing only what it changes
+lib_dm/presets.py              the 56 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch

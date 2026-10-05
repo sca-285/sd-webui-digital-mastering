@@ -53,9 +53,27 @@ _P = {
         background_light=-0.35),
 
     # ---- film -------------------------------------------------------------------
-    "Film: Warm Portrait Stock": dict(
-        offset=0.02, contrast=0.05, saturation=0.90, temperature=0.12,
-        shadow_hue=0.47, shadow_tint=0.08, highlight_hue=0.08, highlight_tint=0.15),
+    "Film: Portra Golden": dict(
+        temperature=0.15, slope=0.94, offset=0.025, contrast=0.10, saturation=0.95, vibrance=0.05,
+        shadow_hue=0.18, shadow_tint=0.15, highlight_hue=0.09, highlight_tint=0.28),
+    "Film: Olive Signature": dict(
+        exposure=-0.05, slope=0.93, offset=0.03, contrast=0.15, saturation=0.95,
+        shadow_hue=0.20, shadow_tint=0.20, highlight_hue=0.10, highlight_tint=0.20),
+    "Film: Tungsten Amber": dict(
+        exposure=-0.20, temperature=0.30, slope=0.93, offset=0.02, contrast=0.20, saturation=1.00,
+        shadow_hue=0.13, shadow_tint=0.25, highlight_hue=0.11, highlight_tint=0.30,
+        rad_outside=-0.25, rad_size=0.75),
+    "Film: Emerald": dict(
+        exposure=-0.10, tint=-0.15, slope=0.93, offset=0.02, contrast=0.25, saturation=1.00,
+        shadow_hue=0.30, shadow_tint=0.28, highlight_hue=0.10, highlight_tint=0.18),
+    "Film: Travel Ektar": dict(
+        temperature=0.08, slope=0.94, offset=0.03, contrast=0.15, saturation=1.05, vibrance=0.15,
+        shadow_hue=0.45, shadow_tint=0.12, highlight_hue=0.12, highlight_tint=0.15,
+        grad_stops=-0.25),
+    "Film: Red Neon Night": dict(
+        exposure=-0.30, temperature=0.15, slope=0.92, contrast=0.30, saturation=1.05,
+        shadow_hue=0.35, shadow_tint=0.20, highlight_hue=0.01, highlight_tint=0.30,
+        rad_outside=-0.30, rad_size=0.70),
     "Film: Cool Slide Stock": dict(
         contrast=0.30, saturation=1.20, temperature=-0.10, shadow_hue=0.64, shadow_tint=0.15),
     "Film: Faded Vintage": dict(
@@ -163,9 +181,10 @@ _P = {
         exposure=-0.10, temperature=-0.35, contrast=0.15, shadow_hue=0.64, shadow_tint=0.35,
         highlight_hue=0.80, highlight_tint=0.15,
         grad_stops=-0.30, grad_hue=0.70, grad_tint=0.25),
-    "Mood: Pastel Dream": dict(
-        exposure=0.15, offset=0.06, contrast=-0.25, saturation=0.75, highlight_hue=0.92,
-        highlight_tint=0.25, shadow_hue=0.50, shadow_tint=0.20, clarity=-0.20),
+    "Mood: Lavender Dusk": dict(
+        slope=0.95, offset=0.04, contrast=-0.05, saturation=0.85, highlight_hue=0.92, highlight_tint=0.28,
+        shadow_hue=0.70, shadow_tint=0.12, clarity=-0.15,
+        grad_position=0.50, grad_softness=0.7, grad_hue=0.90, grad_tint=0.30),
     "Mood: Cyberpunk Neon": dict(
         contrast=0.35, saturation=1.35, shadow_hue=0.80, shadow_tint=0.50,
         highlight_hue=0.50, highlight_tint=0.45, clarity=0.30),
@@ -224,7 +243,12 @@ DESCRIPTIONS = {
     "Portrait: Soft Glamour": "Soft glow with a pink touch in the highlights; beauty-shot look.",
     "Portrait: Golden Skin": "Warm golden skin, like late-afternoon sun.",
     "Portrait: Editorial Crisp": "Magazine portrait: contrasty, crisp, slightly muted colour.",
-    "Film: Warm Portrait Stock": "Warm portrait film: soft, gentle colour.",
+    "Film: Portra Golden": "Golden-hour portrait film: creamy warm highlights, soft olive shadows, whites that never clip.",
+    "Film: Olive Signature": "Editorial film look: olive-green shadows, cream highlights, rich but calm colour.",
+    "Film: Tungsten Amber": "Hotel-lamp interiors on film: deep amber, warm-green shadows, edges in shadow.",
+    "Film: Emerald": "Deep emerald greens with warm skin: forests, green walls, green light.",
+    "Film: Travel Ektar": "Daylight travel on film: rich blues and warm stone, soft whites, deeper sky.",
+    "Film: Red Neon Night": "Night on film under red light: crimson highlights, green shadows, dark.",
     "Film: Cool Slide Stock": "Slide film: cool, saturated, high contrast.",
     "Film: Faded Vintage": "Old faded print: lifted blacks, washed colour, warm highlights.",
     "Film: Bleach Bypass": "Silvery, near-desaturated, harsh contrast; war-film look.",
@@ -252,7 +276,7 @@ DESCRIPTIONS = {
     "Auteur: Pastel Symmetry": "Bright storybook pastels with pink highlights and a cream border.",
     "Mood: Golden Hour": "Golden late-afternoon sun with slightly violet shadows.",
     "Mood: Blue Hour": "Blue dusk with a pink-violet touch in the highlights.",
-    "Mood: Pastel Dream": "Dreamy pastel: bright, soft, light pink and cyan.",
+    "Mood: Lavender Dusk": "Pink-lavender dusk: soft, airy, low contrast, a blush in the sky.",
     "Mood: Cyberpunk Neon": "Neon magenta and cyan, very saturated.",
     "Mood: Autumn Warmth": "Warm red-orange autumn-leaf colour.",
     "Mood: Arctic Cold": "Icy cold, bright, low colour.",
