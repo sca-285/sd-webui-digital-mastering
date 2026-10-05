@@ -36,7 +36,7 @@ and grain are in Optical Realism (see below).
 Each section has an **Enable** box (Color, Detail & Finish, Selective Color,
 LUT, Local, Overlay, Frame, Export, Restoration); an unticked section is ignored whatever its sliders say.
 A preset ticks the sections it uses (their other controls at neutral) and
-unticks the rest, Local light and Frame (letterbox, border) included; it never touches Intensity, the LUT, the overlays or Export (crop, size, watermark), so you can set
+unticks the rest, Local light included; it never touches Intensity, the LUT, the overlays or the Output tab (frame and export), so you can set
 Intensity once and flick through presets. The colour sliders show a colour
 wheel on their track.
 
@@ -88,7 +88,7 @@ Love*, *Fallen Angels*, *2046* and *Happy Together* after Wong Kar-wai's films
 (Christopher Doyle's photography), plus *Hong Kong 90s*, *Saigon Rain*, *Matte
 Street*, *Golden Anamorphic*, *Sickly Thriller*, *Nordic Noir* and *Pastel
 Symmetry*. They are homages built from this suite's own controls, not copies of
-any grade. Most use Local light and a letterbox; pair them with an Optical
+any grade. Most use Local light; add a letterbox under Output if you want the bars. Pair them with an Optical
 Realism preset for grain, halation and glow (e.g. *Night City Glow* with
 *Chungking Neon*, *Film Camera 35mm* with *Mood for Love*).
 

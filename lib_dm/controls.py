@@ -113,7 +113,7 @@ CONTROLS = [
             info="Exposure in stops on detected people (dodge / burn the subject). Uses people detection."),
     Control("background_light", "Background: light", 0.0, -2.0, 1.0, 0.05,
             info="Exposure in stops on everything else. Uses people detection."),
-    # --- output: frame (part of a look) and export (one picture's) ------------
+    # --- output: frame and export, set by hand, never by a preset ------------
     Control("out_letterbox", "Letterbox", "None", kind="choice", choices=tuple(LETTERBOXES),
             info="Black cinema bars over top and bottom; the picture keeps its size. 2.39:1 = scope."),
     Control("out_aspect", "Crop to", "Original", kind="choice", choices=tuple(ASPECTS),
@@ -171,10 +171,10 @@ GROUP_OF = {n: g for g, names in GROUPS.items() for n in names}
 # Not part of the look: never pasted from PNG info.
 LOCAL_ONLY = {"lut_dir", "overlay_dir", "wm_font", "false_color"}
 OVERLAY_CONTROLS = set(GROUPS["en_overlay"]) | {"en_overlay", "overlay_dir"}
-# Crop, size and watermark belong to one picture, not to a look: presets
-# leave them be. Local light and the frame (letterbox, border) are part of
-# a look, and presets may set them.
-PER_IMAGE_CONTROLS = set(GROUPS["en_export"]) | {"en_export", "wm_font"}
+# The Output tab (frame and export) belongs to one picture, not to a look:
+# presets leave it be. Local light is part of a look, and presets may set it.
+PER_IMAGE_CONTROLS = (set(GROUPS["en_frame"]) | set(GROUPS["en_export"])
+                      | {"en_frame", "en_export", "wm_font"})
 
 
 def coerce(name, value):
