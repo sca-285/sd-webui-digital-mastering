@@ -235,6 +235,60 @@ def sharpen(x, amount, protect_mask=None):
 
 # ---------------------------------------------------------------- finishing
 
+# ---------------------------------------------------------------- local
+
+def gradient_mask(h, w, angle, position, softness, device, dtype):
+    """(1, 1, H, W) graduated-filter mask: 1 on the filtered side, 0 beyond.
+
+    angle: degrees the filter comes from, 0 = top, 90 = right, 180 = bottom.
+    position: where the transition is centred along that direction, 0..1
+    from the filtered edge. softness: transition width, as a share of the frame.
+    """
+    t = math.radians(angle)
+    yy = torch.linspace(-0.5, 0.5, h, device=device, dtype=dtype).view(1, 1, h, 1)
+    xx = torch.linspace(-0.5, 0.5, w, device=device, dtype=dtype).view(1, 1, 1, w)
+    # Distance from the filtered edge along the filter's direction, 0..1.
+    d = 0.5 - (xx * math.sin(t) - yy * math.cos(t))
+    half = max(float(softness), 0.02) / 2
+    return 1.0 - smoothstep(position - half, position + half, d)
+
+
+def radial_mask(h, w, cx, cy, size, softness, device, dtype):
+    """(1, 1, H, W): 1 inside an ellipse centred at (cx, cy) (0..1 of the
+    frame), fading to 0 outside. size is the radius as a share of the frame's
+    shorter side; the ellipse follows the frame's proportions."""
+    yy = torch.linspace(0.0, 1.0, h, device=device, dtype=dtype).view(1, 1, h, 1)
+    xx = torch.linspace(0.0, 1.0, w, device=device, dtype=dtype).view(1, 1, 1, w)
+    short = min(h, w)
+    d = torch.sqrt(((xx - cx) * w / short) ** 2 + ((yy - cy) * h / short) ** 2) / max(size, 1e-3)
+    s = max(float(softness), 0.02)
+    return 1.0 - smoothstep(1.0 - s, 1.0 + s, d)
+
+
+def local_light(x, stops, tint_rgb=None, tint_amount=None):
+    """Per-pixel exposure (stops map, (1, 1, H, W)) in linear light, with an
+    optional colour filter (tint_rgb (1, 3, 1, 1), tint_amount map)."""
+    lin = srgb_to_linear(x) * (2.0 ** stops)
+    if tint_rgb is not None:
+        filt = tint_rgb / (tint_rgb * tint_rgb.new_tensor(LUMA).view(1, 3, 1, 1)).sum(1, keepdim=True)
+        lin = lin * torch.lerp(torch.ones_like(filt), filt, tint_amount)
+    return linear_to_srgb(lin)
+
+
+def mask_centre(mask, threshold=0.5):
+    """Centre (cx, cy, 0..1) and rough radius of the masked area, or None."""
+    m = (mask[0, 0] > threshold).to(mask.dtype)
+    total = float(m.sum())
+    if total < 0.002 * m.numel():
+        return None
+    h, w = m.shape
+    ys = torch.arange(h, device=m.device, dtype=m.dtype).view(h, 1)
+    xs = torch.arange(w, device=m.device, dtype=m.dtype).view(1, w)
+    cy = float((m * ys).sum()) / total / max(h - 1, 1)
+    cx = float((m * xs).sum()) / total / max(w - 1, 1)
+    return cx, cy, math.sqrt(total / m.numel())
+
+
 def hue_rotate(rgb, turns):
     """Rotate the hue of an RGB tensor by `turns` of the colour wheel (YIQ)."""
     if abs(turns) < 1e-6:

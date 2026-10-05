@@ -6,12 +6,16 @@ Order, and why:
     exposure / WB        in linear light, on the cleanest data
     CDL, contrast        the primary grade
     saturation, split    secondary colour
+    local                graduated / radial filters, people and background light
     LUT                  a look on top of the grade, as colourists stack it
     selective colour     after the look, so the kept hue is the final hue
     clarity, sharpen     detail last among the edits, on the final tones
     overlay layers       textures on top of the finished grade, never sharpened
     intensity            blend the whole grade back towards the original
-    dither               very last: anything after it would amplify it
+    crop, resize,        output framing; after the blend, which needs the
+    output sharpen       original's size
+    dither               last of the pixel work: anything after it would amplify it
+    watermark, border    drawn on top, untouched by the grade
 
 A stage whose controls are at their defaults is skipped entirely.
 """
@@ -23,6 +27,7 @@ import torch
 from PIL import Image
 
 from . import ops
+from . import output as out
 from . import overlay as ov
 from .controls import GROUPS, NEUTRAL, OVERLAY_CONTROLS, effective, is_neutral
 
@@ -58,14 +63,18 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     x = torch.nan_to_num(to_tensor(image, device), nan=0.0, posinf=1.0, neginf=0.0)
     original = x
 
-    protect = None
-    wants_mask = s["semantic"] and mask_fn is not None and (
-        s["clarity"] != 0 or s["sharpen"] > 0 or s["splash_desat"] > 0)
-    if wants_mask:
+    protect = person = None
+    wants_protect = s["semantic"] and (s["clarity"] != 0 or s["sharpen"] > 0 or s["splash_desat"] > 0)
+    wants_people = (s["en_local"] and (s["subject_light"] != 0 or s["background_light"] != 0
+                                       or (s["rad_on_people"] and _active(s, "rad_inside", "rad_outside"))))
+    wants_people = wants_people or (s["en_output"] and s["out_crop_people"] and s["out_aspect"] != "Original")
+    if mask_fn is not None and (wants_protect or wants_people):
         try:
-            protect = mask_fn(image).to(x.device, x.dtype) * s["protect"]
+            person = mask_fn(image).to(x.device, x.dtype)
         except Exception as exc:
             print(f"[Digital Mastering] Subject mask failed, continuing without it: {exc}")
+    if person is not None and wants_protect:
+        protect = person * s["protect"]
 
     gen = torch.Generator(device=x.device)
     gen.manual_seed(int(seed) & 0x7FFFFFFFFFFFFFFF)
@@ -86,6 +95,9 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     if s["shadow_tint"] > 0 or s["highlight_tint"] > 0:
         x = ops.split_tone(x, s["shadow_hue"], s["shadow_tint"],
                            s["highlight_hue"], s["highlight_tint"], s["tone_balance"])
+
+    if s["en_local"]:
+        x = _local(x, s, person)
 
     if lut_volume is not None and s["lut_strength"] > 0:
         x = ops.apply_lut(x, lut_volume.to(x.device, x.dtype), s["lut_strength"])
@@ -119,19 +131,82 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     x = x.clamp(0.0, 1.0)
     if s["strength"] < 1.0:
         x = torch.lerp(original, x, s["strength"])
+    box = None
+    if s["en_output"]:
+        x, box = _output_pixels(x, s, person)
     if s["dither"] > 0:
         x = ops.dither(x, s["dither"], gen)
 
     result = to_image(x)
     if alpha is not None:
+        if box is not None:
+            alpha = alpha.crop(box)
+        if alpha.size != result.size:
+            alpha = alpha.resize(result.size, Image.LANCZOS)
         result.putalpha(alpha)
+    if s["en_output"]:
+        # Watermark on the picture itself, then the border round both.
+        result = out.watermark(result, s["wm_text"], s["wm_position"], s["wm_opacity"], s["wm_size"],
+                               s.get("wm_font", ""))
+        result = out.border(result, s["out_border"], s["out_border_size"])
     scope = to_image(ops.false_color(x)) if s["false_color"] else None
     return result, scope
+
+
+def _local(x, s, person):
+    """Graduated and radial filters and people / background light, as one
+    exposure map (stops per pixel) applied once in linear light."""
+    _, _, h, w = x.shape
+    stops = torch.zeros((1, 1, h, w), device=x.device, dtype=x.dtype)
+    tint_rgb = tint_amount = None
+    if s["grad_stops"] != 0 or s["grad_tint"] > 0:
+        g = ops.gradient_mask(h, w, s["grad_angle"], s["grad_position"], s["grad_softness"], x.device, x.dtype)
+        stops = stops + s["grad_stops"] * g
+        if s["grad_tint"] > 0:
+            # Half-strength colour: a real coloured grad is a tint, not a gel.
+            tint_rgb = 0.5 + 0.5 * ops.hue_to_rgb(s["grad_hue"], x.device, x.dtype)
+            tint_amount = g * s["grad_tint"]
+    if s["rad_inside"] != 0 or s["rad_outside"] != 0:
+        cx, cy = s["rad_x"], s["rad_y"]
+        if s["rad_on_people"] and person is not None:
+            found = ops.mask_centre(person)
+            if found is not None:
+                cx, cy = found[0], found[1]
+        m = ops.radial_mask(h, w, cx, cy, s["rad_size"], s["rad_softness"], x.device, x.dtype)
+        stops = stops + s["rad_inside"] * m + s["rad_outside"] * (1.0 - m)
+    if person is not None and (s["subject_light"] != 0 or s["background_light"] != 0):
+        # Feathered, so the change of light has no visible edge round the subject.
+        soft = ops.gaussian_blur(person, max(1.0, 0.012 * min(h, w))).clamp(0.0, 1.0)
+        stops = stops + s["subject_light"] * soft + s["background_light"] * (1.0 - soft)
+    if tint_rgb is None and not bool((stops != 0).any()):
+        return x
+    return ops.local_light(x, stops, tint_rgb, tint_amount)
+
+
+def _output_pixels(x, s, person):
+    """Crop, resize and output sharpening. Returns the image and the crop
+    box used (None if not cropped), so the alpha channel can follow."""
+    _, _, h, w = x.shape
+    cx, cy = s["out_crop_x"], s["out_crop_y"]
+    if s["out_crop_people"] and person is not None:
+        found = ops.mask_centre(person)
+        if found is not None:
+            cx, cy = found[0], found[1]
+    box = out.crop_box(w, h, s["out_aspect"], cx, cy)
+    if box is not None:
+        x = out.crop(x, box)
+    if s["out_long_edge"] > 0:
+        x = out.resize_long_edge(x, int(s["out_long_edge"]))
+    if s["out_sharpen"] > 0:
+        x = out.unsharp(x, s["out_sharpen"], 0.8)
+    return x, box
 
 
 def is_noop(s) -> bool:
     """True if these settings would not change the image at all."""
     s = effective(s)
+    if s["en_output"] and out.is_active(s):
+        return False
     if s["strength"] <= 0 and s["dither"] <= 0:
         return True
     ignore = ("strength", "lut", "lut_dir", "lut_strength", "false_color", "semantic", "protect",
