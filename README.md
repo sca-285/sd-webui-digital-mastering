@@ -198,7 +198,7 @@ lib_dm/segment.py              SegFormer-B0 person mask
 lib_dm/reference.py            the folded preset reference
 lib_dm/carousel.py             the preset carousel (HTML)
 javascript/dm_carousel.js      the preset carousel (clicks, filter, scroll)
-preset_icons.jpg/.json         the preset icons, one sprite
+preset_icons/                  the preset icons, one picture per preset
 preset_reference.jpg           the preset reference picture
 overlays/                      the shipped overlay textures
 overlay_reference.jpg          every shipped overlay on the sample photos
@@ -216,7 +216,7 @@ Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit
 Eileen Collins by NASA (public domain), coffee cup by Rachel Michetti (CC0),
 Falcon 9 launch by SpaceX (public domain).
 
-Preset icons (`preset_icons.jpg`) use the same sample photos and are set in Bebas Neue, Playfair Display and Space Grotesk (SIL Open Font License 1.1); only the rendered picture is shipped, not the fonts.
+Preset icons (`preset_icons/`) are set in Bebas Neue (SIL Open Font License 1.1); only the rendered pictures are shipped, not the font.
 
 Thanks also to **Claude**, for help building this
 extension.
