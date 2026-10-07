@@ -29,7 +29,7 @@ and grain are in Optical Realism (see below).
 | Color | Enable Color · Light (exposure, contrast, dehaze) · Tone curve · White balance · Colour (saturation, vibrance) · Split toning · Black & white (amount, colour filter) · CDL |
 | Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen, skin smoothing) · Finish (anti-banding) |
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
-| HSL & Wheels | Enable HSL · hue, saturation, lightness for red, orange, yellow, green, aqua, blue, purple, magenta · Enable Color wheels · lift, gamma, gain (colour, amount, level) |
+| HSL & Wheels | Enable HSL · hue, saturation, lightness for red, orange, yellow, green, aqua, blue, purple, magenta · Enable Color wheels · round lift, gamma, gain wheels with a level slider under each |
 | Local | Enable Local · Graduated filter (exposure, direction, reach, softness, colour) · Radial filter (inside, outside, centre on people, position, size, softness) · People / Background light |
 | Overlay | Enable Overlay · Layer 1 and Layer 2 (file + Refresh, blend, opacity, colour shift, zoom, fit) · Both layers (vary with seed, turn to match orientation, extra folder) |
 | Output | Frame: Enable Frame · Letterbox (1.85, 2, 2.39, 2.76:1) · Border (none, white, black, cream, Polaroid). Export: Enable Export · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Subtitle (text, colour, size) · Watermark (text, position, opacity, size, font file) |
@@ -118,9 +118,10 @@ takes haze out with dehaze before a light polish.
 - **HSL**: hue (up to 30°), saturation and lightness for eight colours, split
   smoothly between neighbouring bands; greys are never touched. The Film presets
   use it for their olive greens and warm skin.
-- **Colour wheels**: lift, gamma and gain, each with a colour push and a level,
-  the primary grade of a grading panel. Split toning cannot tint the midtones;
-  the gamma wheel can.
+- **Colour wheels**: lift, gamma and gain as round wheels, as on a grading
+  panel. Drag the dot: its direction is the colour, its distance from the
+  centre the amount; double-click clears. A level slider sits under each wheel.
+  Split toning cannot tint the midtones; the gamma wheel can.
 - **Black & white**: monochrome through a filter as on B&W film (neutral, red,
   orange, yellow, green, blue, infrared). The B&W presets use it: yellow for
   Classic Silver, red for Hard Noir.
@@ -190,6 +191,8 @@ lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
 lib_dm/grade.py                HSL, colour wheels, black & white, dehaze, tone curves, skin smoothing
+lib_dm/wheels.py               the round colour wheels (HTML)
+javascript/dm_wheels.js        the colour wheels (dragging, following the sliders)
 lib_dm/lut.py                  .cube discovery and parsing
 lib_dm/overlay.py              overlay discovery, loading and fitting
 lib_dm/output.py               crop, resize, output sharpening, border, watermark

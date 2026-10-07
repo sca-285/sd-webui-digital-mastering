@@ -188,3 +188,55 @@
 /* One-line guide under the preset picker and at the top of each tab. */
 .dm-guide { margin: 0 0 6px 0 !important; opacity: 0.75; font-size: 13px; }
 .dm-guide p { margin: 0 !important; }
+
+/* Colour wheels (lift / gamma / gain). The hue and amount sliders they drive
+   stay in the page, hidden. */
+.dm-wheel-raw { display: none !important; }
+.dm-wheels {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 6px 0 4px 0;
+}
+.dm-wheel { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.dm-wheel-disc {
+    position: relative;
+    width: 100%;
+    max-width: 150px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle closest-side, #7f7f7f 0%, rgba(127, 127, 127, 0.85) 25%, rgba(127, 127, 127, 0) 100%),
+        conic-gradient(#ff3b3b, #ffd23b, #3bff6a, #3bf0ff, #3b5bff, #ff3bf0, #ff3b3b);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45), 0 0 0 3px rgba(128, 128, 128, 0.18);
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+}
+.dm-wheel-cross::before, .dm-wheel-cross::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+.dm-wheel-cross::before { width: 12px; height: 1px; }
+.dm-wheel-cross::after { width: 1px; height: 12px; }
+.dm-wheel-puck {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    background: #ddd;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 1px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+.dm-wheel-label { font-size: 13px; font-weight: 600; }
+.dm-wheel-label span { font-weight: 400; opacity: 0.6; }
+.dm-wheel-val { font-size: 11px; opacity: 0.6; font-variant-numeric: tabular-nums; }

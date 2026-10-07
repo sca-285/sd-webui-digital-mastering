@@ -18,6 +18,7 @@ from lib_dm.controls import (  # noqa: E402
     BY_NAME, GROUP_OF, INFOTEXT_KEY, LOCAL_ONLY, NAMES, coerce, from_infotext, settings, to_infotext,
 )
 from lib_dm.layout import HUE_SLIDERS, QUICK_START, TABS as LAYOUT  # noqa: E402
+from lib_dm.wheels import RAW as WHEEL_RAW, WHEELS, wheels_html  # noqa: E402
 from lib_dm.pipeline import is_noop, master  # noqa: E402
 from lib_dm.carousel import carousel_html, parse_pick  # noqa: E402
 from lib_dm.presets import CATEGORIES, DESCRIPTIONS, NOT_IN_PRESETS, PRESETS  # noqa: E402
@@ -143,6 +144,15 @@ class Script(scripts.Script):
                                     refresh = gr.Button("Refresh", size="sm", scale=0, min_width=90,
                                                         elem_id=f"dm_lut_refresh_{tab}")
                                 add_all([n for n in names if n not in ("en_lut", "lut")])
+                            elif names and names[0] == "en_wheels":
+                                # Round wheels drive the hidden hue / amount sliders;
+                                # the level sliders sit under them.
+                                add("en_wheels")
+                                gr.HTML(wheels_html(tab), elem_id=f"dm_wheels_{tab}")
+                                with gr.Row():
+                                    for w, _, _ in WHEELS:
+                                        add(f"{w}_lum")
+                                add_all([n for n in names if n in WHEEL_RAW])
                             elif names and names[0].startswith("overlay_") and names[0] != "overlay_dir":
                                 with gr.Row():
                                     add(names[0])
@@ -221,7 +231,8 @@ class Script(scripts.Script):
             return gr.Dropdown(label=c.label, choices=overlay_choices(), value="None", elem_id=eid)
         if c.kind == "choice":
             return gr.Dropdown(label=c.label, choices=list(c.choices), value=c.default, elem_id=eid, info=info)
-        classes = ["dm-hue"] if c.name in HUE_SLIDERS else None
+        classes = (["dm-hue"] if c.name in HUE_SLIDERS else []) + (["dm-wheel-raw"] if c.name in WHEEL_RAW else [])
+        classes = classes or None
         return gr.Slider(label=c.label, minimum=c.minimum, maximum=c.maximum, step=c.step,
                          value=c.default, elem_id=eid, info=info, elem_classes=classes)
 

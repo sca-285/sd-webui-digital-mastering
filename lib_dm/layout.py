@@ -50,7 +50,7 @@ Exposure in stops, contrast, white balance, saturation. **Split toning** tints s
     {
         "title": "HSL & Wheels",
         "guide": """
-**HSL**: hue, saturation and lightness per colour. **Wheels**: colour and level for shadows (lift), midtones (gamma) and highlights (gain).
+**HSL**: hue, saturation and lightness per colour. **Wheels**: drag the dot to tint shadows (lift), midtones (gamma) or highlights (gain); further out = stronger, double-click clears.
 """,
         "sections": [
             ("HSL", ["en_hsl"]),
