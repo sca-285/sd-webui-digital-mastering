@@ -5,43 +5,15 @@ Four tabs. Every control is visible: each tab is a list of titled sections
 """
 
 QUICK_START = """
-**Quick start (3 steps)**
-
-1. Pick a **Look preset**. The line underneath says what it does.
-2. Drag **Intensity**: 1 = full, 0.5 = half, 0 = the original image. Intensity stays where you left it when you switch presets, so you can compare them all at the same strength.
-3. To fine-tune, open the tabs below. Each section has an **Enable** box: only ticked sections are applied, so you can set a section up and switch it on and off to compare. **Reset** unticks everything and restores the defaults.
-
-A preset ticks the sections it uses and sets their sliders; nothing is hidden, and you can keep adjusting after picking one.
-Settings are saved in PNG Info: Send to / Paste restores the exact look.
-
-*With Auto Color Corrector and Optical Realism:* this suite is the grade (light, colour, detail, overlays, repair).
-Auto Color Corrector runs first and only fixes faults (casts, exposure, levels); lens, light, depth of field,
-vignette, grain, dust and flash live in Optical Realism, which runs next. The grade lands last, on the finished "photograph".
+Pick a look, then set **Intensity** (0 = original). Each tab's **Enable** box switches it on or off; **Reset** clears everything.
+Settings travel in PNG info. Full guide: README on GitHub.
 """
 
 TABS = [
     {
         "title": "Color",
         "guide": """
-**Light and colour.** Tick **Enable Color** first; nothing here applies while it is off.
-
-| Slider | What it does | Typical range |
-|---|---|---|
-| Exposure | Brighter / darker overall, in stops (+1 = twice as bright) | -0.3 … +0.3 |
-| Contrast | S-curve. Negative flattens for a matte look | -0.2 … +0.4 |
-| Temperature | Negative cooler (blue), positive warmer (amber) | ±0.1 … ±0.4 |
-| Tint | Negative towards green, positive towards magenta | ±0.05 … ±0.2 |
-| Saturation | Strength of every colour. 0 = black & white | 0.8 … 1.3 |
-| Vibrance | Boosts only the muted colours; leaves skin and already-strong colours alone | 0.1 … 0.4 |
-
-**Split toning**: one colour into the shadows, another into the highlights. This is where "cinematic" looks come from.
-The *colour* sliders pick a hue around the wheel: 0 red · 0.08 orange · 0.16 yellow · 0.33 green · 0.5 cyan · 0.66 blue · 0.8 magenta.
-*amount* is how strong. Teal & Orange, for example: Shadow colour 0.5, amount 0.4; Highlight colour 0.08, amount 0.4.
-
-**CDL** is for people used to colourist tools: Slope ≈ gain, Offset ≈ lift / crush the blacks, Power ≈ midtone gamma.
-
-**Dehaze** takes haze and milkiness out (dark-channel method). **Tone curve** picks a ready-made curve: Film S, Matte fade, Crushed blacks, Cross process... *Curve amount* blends it in.
-**Black & white** turns the picture monochrome through a coloured filter, as on B&W film: red for dark dramatic skies, green for light foliage and smooth skin, infrared for white leaves.
+Exposure in stops, contrast, white balance, saturation. **Split toning** tints shadows and highlights (hue: 0 red, 0.08 orange, 0.5 cyan, 0.66 blue). **CDL**: slope / offset / power.
 """,
         "sections": [
             (None, ["en_color"]),
@@ -57,20 +29,7 @@ The *colour* sliders pick a hue around the wheel: 0 red · 0.08 orange · 0.16 y
     {
         "title": "Detail & Finish",
         "guide": """
-**Sharpness and the final finishing layer.** Tick **Enable Detail & Finish** first.
-
-| Slider | What it does | Typical range |
-|---|---|---|
-| Clarity | Positive: depth, detail stands out. Negative: soft glow, smoother skin | -0.3 … +0.5 |
-| Sharpen | Sharpens edges only; flat areas and noise are left alone | 0.1 … 0.3 |
-
-- **Clarity radius**: small affects texture, large affects shape and depth.
-- **Anti-banding**: a trace of noise that removes banding in skies and gradients. Always applied last.
-- **Skin smoothing (AI)**: softens skin texture by frequency separation, keeps the tones and the edges (eyes, lips, hair). Uses people detection (SegFormer-B0, ~15 MB, first use).
-
-Vignette and film grain are camera traits: they are in Optical Realism.
-
-Tip: for portraits, turn on **Protect people** in *Tools* so Clarity and Sharpen do not roughen skin.
+**Clarity**: + depth, − soft glow. **Sharpen** works on edges only. **Anti-banding** removes steps in skies. Skin smoothing uses people detection.
 """,
         "sections": [
             (None, ["en_detail"]),
@@ -81,14 +40,7 @@ Tip: for portraits, turn on **Protect people** in *Tools* so Clarity and Sharpen
     {
         "title": "Effects",
         "guide": """
-**Keep one colour (colour splash)**: the picture goes black & white except for one colour.
-1. Tick **Enable Selective Color**. **Grey out other colours** starts at 1 (fully grey); lower it to keep some colour everywhere.
-2. **Colour to keep** picks the colour: 0 red · 0.08 orange · 0.16 yellow · 0.33 green · 0.6 blue.
-3. **Colour range**: larger keeps more neighbouring hues.
-To keep *people* in colour instead, turn on **Protect people** in *Tools* (preset "Splash: Subject in Colour").
-
-**LUT**: tick **Enable LUT**, copy `.cube` files into `models/LUTs` and press **Refresh**, or enter another folder in *Extra LUT folder*. Presets never change your LUT choice.
-**LUT opacity** tones the LUT down. The LUT is applied after the colour grade, the way colourists stack them.
+**Selective colour** keeps one hue and greys the rest. **LUT**: put `.cube` files in `models/LUTs` and press Refresh.
 """,
         "sections": [
             ("Selective colour", ["en_splash", "splash_desat", "splash_hue", "splash_tolerance"]),
@@ -98,9 +50,7 @@ To keep *people* in colour instead, turn on **Protect people** in *Tools* (prese
     {
         "title": "HSL & Wheels",
         "guide": """
-**HSL**: hue, saturation and lightness for each of eight colours, like Lightroom's HSL panel. Turn greens towards yellow and down for an olive film look, lift oranges for brighter skin, deepen blues for the sky. Greys are never touched.
-
-**Color wheels**: lift (shadows), gamma (midtones) and gain (highlights), as on a grading panel. *Colour* and *amount* push a colour into that range; *level* makes it darker or brighter. Split toning only reaches shadows and highlights; the gamma wheel tints the midtones too.
+**HSL**: hue, saturation and lightness per colour. **Wheels**: colour and level for shadows (lift), midtones (gamma) and highlights (gain).
 """,
         "sections": [
             ("HSL", ["en_hsl"]),
@@ -113,15 +63,7 @@ To keep *people* in colour instead, turn on **Protect people** in *Tools* (prese
     {
         "title": "Local",
         "guide": """
-**Light in one part of the picture**, the way a photographer dodges and burns. Tick **Enable Local**. Everything here is exposure in stops (+1 = twice as bright), worked in linear light.
-
-**Graduated filter**: like a grad ND on the lens. *Filter comes from* 0 = top (a sky), 180 = bottom; *reaches* = where it fades out; a negative value darkens. *Filter colour* tints that side, e.g. orange 0.08 for a sunset sky.
-
-**Radial filter**: an ellipse; *inside* lifts or darkens the centre, *outside* the rest. A slightly negative *outside* draws the eye in. **Centre on people** puts it on the detected subject.
-
-**People / Background light**: lift the subject, darken the background, or both, with people detection (SegFormer-B0, ~15 MB, downloaded on first use).
-
-Presets may set this tab (a portrait preset lifts the subject, a landscape one darkens the sky); picking a preset replaces what is here.
+Exposure in one part of the frame: **graduated** (sky), **radial** (centre / outside) and **people / background** light.
 """,
         "sections": [
             (None, ["en_local"]),
@@ -135,20 +77,7 @@ Presets may set this tab (a portrait preset lifts the subject, a landscape one d
     {
         "title": "Overlay",
         "guide": """
-**Texture layers on top of the grade**: light leaks, dust, bokeh, prism flares, scratches. Tick **Enable Overlay**, then pick a file for **Layer 1** (and **Layer 2** to stack two).
-
-| Control | What it does |
-|---|---|
-| Blend | *Auto* suits most files: Normal for transparent PNGs, Screen for textures on black. Screen / Add brighten (light), Multiply darkens (textures on white), Overlay / Soft light add contrast |
-| Opacity | How strong the layer is |
-| Colour shift | Recolours the layer: a yellow leak at 0.5 turns blue |
-| Zoom | Crops into the texture: bigger, fewer specks |
-| Fit | Cover keeps the texture's proportions and crops; Stretch fills the frame exactly |
-
-**Vary with seed** flips and shifts the layers per image, reproducibly, so a batch does not repeat one texture. **Turn to match orientation** turns a landscape texture for a portrait image.
-
-Files: the extension's `overlays` folder ships a set; add your own PNG / WebP / JPEG to `models/overlays` (or name a folder below) and press **Refresh**. Presets never change your overlay choice.
-The overlays are textures laid on top, the same on every image. For effects worked out from the scene itself (dust only on film, glow from the real highlights, flash by distance) use Optical Realism.
+Light leaks, dust, bokeh and other textures on top. Blend *Auto* suits most files. Add your own to `models/overlays` and press Refresh.
 """,
         "sections": [
             (None, ["en_overlay"]),
@@ -161,21 +90,7 @@ The overlays are textures laid on top, the same on every image. For effects work
     {
         "title": "Output",
         "guide": """
-**Ready to post or print.** Two parts, each with its own Enable box, and both run last. Presets never touch this tab: what you set here stays when you switch looks.
-
-**Frame**: **Letterbox** lays black cinema bars over the top and bottom (the picture keeps its size; 2.39:1 is the widescreen "scope" shape), **Border** frames the picture in white, black, cream or Polaroid.
-
-**Export**:
-
-| Step | What it does |
-|---|---|
-| Crop to | Cuts the largest window of that shape: 4:5 feed, 9:16 Story / Reels, 1:1, 3:2 print. *Centre X / Y* move it; **Keep people in the crop** centres it on the subject |
-| Resize long edge | Exact output size, e.g. 1080 or 1350 for a feed. 0 = keep |
-| Output sharpening | A little crispness back after resizing |
-| Subtitle | A film subtitle, white or yellow with a dark outline, centred at the bottom (inside the letterbox bar when there is one) |
-| Watermark | Your name or handle, white with a soft shadow. A font file path (.ttf / .otf) is optional |
-
-Hires fix and upscalers run before this, so crop and resize apply to the final picture.
+Runs last and presets never touch it. **Frame**: letterbox bars, border. **Export**: crop for a platform, resize, sharpen, subtitle, watermark.
 """,
         "sections": [
             ("Frame", ["en_frame", "out_letterbox", "out_border", "out_border_size"]),
@@ -188,12 +103,7 @@ Hires fix and upscalers run before this, so crop and resize apply to the final p
     {
         "title": "Tools",
         "guide": """
-JPEG repair (de-blocking, de-ringing) and noise reduction are corrections, so they live in Auto Color Corrector, which finds and fixes them by itself.
-
-**Protect people (AI)**: finds people with SegFormer-B0 (~15 MB, downloaded on first use) and keeps Clarity, Sharpen and Grey-out off them. *Protect strength* = how much.
-
-**Exposure check**: adds an exposure map next to the result (the image itself is not changed):
-purple = crushed black · teal = deep shadow · green = mid-grey · yellow = close to clipping · red = clipped.
+**Protect people** keeps clarity, sharpen and grey-out off people. **Exposure check** adds a false-colour map beside the result.
 """,
         "sections": [
             ("Protect people", ["semantic", "protect"]),

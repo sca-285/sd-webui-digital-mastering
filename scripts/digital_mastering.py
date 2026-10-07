@@ -122,15 +122,13 @@ class Script(scripts.Script):
             gr.HTML(reference_html(EXTENSION_ROOT, "dm-ref", "Digital Mastering look presets"),
                     elem_id=f"dm_preset_ref_{tab}")
             add("strength")
-            with gr.Accordion("Quick start", open=False, elem_id=f"dm_help_{tab}"):
-                gr.Markdown(QUICK_START)
+            gr.Markdown(QUICK_START.strip(), elem_id=f"dm_help_{tab}", elem_classes=["dm-guide"])
 
             ov_refresh = []
             with gr.Tabs():
                 for t in LAYOUT:
                     with gr.Tab(t["title"]):
-                        with gr.Accordion("Guide", open=False):
-                            gr.Markdown(t["guide"])
+                        gr.Markdown(t["guide"].strip(), elem_classes=["dm-guide"])
                         if t.get("reference"):
                             gr.HTML(reference_html(EXTENSION_ROOT, "dm-ref", "The shipped overlays",
                                                    file=t["reference"], label="Overlay reference"))
