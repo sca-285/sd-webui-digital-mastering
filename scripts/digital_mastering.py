@@ -19,7 +19,8 @@ from lib_dm.controls import (  # noqa: E402
 )
 from lib_dm.layout import HUE_SLIDERS, QUICK_START, TABS as LAYOUT  # noqa: E402
 from lib_dm.pipeline import is_noop, master  # noqa: E402
-from lib_dm.presets import CHOICES, CUSTOM, DESCRIPTIONS, NOT_IN_PRESETS, PRESETS  # noqa: E402
+from lib_dm.carousel import carousel_html, parse_pick  # noqa: E402
+from lib_dm.presets import CATEGORIES, DESCRIPTIONS, NOT_IN_PRESETS, PRESETS  # noqa: E402
 from lib_dm.reference import reference_html  # noqa: E402
 
 
@@ -109,11 +110,15 @@ class Script(scripts.Script):
         # silently rebind the saved ui-config.json defaults.
         with InputAccordion(False, label="Digital Mastering",
                             elem_id=f"dm_enabled_{tab}") as enabled:
-            with gr.Row():
-                preset = gr.Dropdown(label="Look preset", choices=CHOICES, value=CUSTOM,
-                                     elem_id=f"dm_preset_{tab}")
+            gr.HTML(carousel_html(EXTENSION_ROOT, "dm", tab, list(PRESETS), CATEGORIES, DESCRIPTIONS,
+                                  display=lambda n: n.split(": ", 1)[-1]),
+                    elem_id=f"dm_preset_car_{tab}")
+            pick = gr.Textbox(value="", show_label=False, container=False, elem_id=f"dm_preset_pick_{tab}",
+                              elem_classes=["dm-pick"])
+            with gr.Row(equal_height=True):
+                about = gr.Markdown("*Pick a look above, or Reset to start clean.*",
+                                    elem_id=f"dm_preset_about_{tab}")
                 reset = gr.Button("Reset", scale=0, min_width=100, elem_id=f"dm_reset_{tab}")
-            about = gr.Markdown("", elem_id=f"dm_preset_about_{tab}")
             gr.HTML(reference_html(EXTENSION_ROOT, "dm-ref", "Digital Mastering look presets"),
                     elem_id=f"dm_preset_ref_{tab}")
             add("strength")
@@ -172,16 +177,17 @@ class Script(scripts.Script):
         def values_for(s):
             return [gr.update() if n in NOT_IN_PRESETS else gr.update(value=s[n]) for n in NAMES]
 
-        def apply_preset(name):
+        def apply_preset(value):
+            name = parse_pick(value)
             s = PRESETS.get(name)
             if not s:
-                return [gr.update(value="")] + [gr.update() for _ in NAMES]
-            return [gr.update(value=f"*{DESCRIPTIONS.get(name, '')}*")] + values_for(s)
+                return [gr.update() for _ in range(len(NAMES) + 1)]
+            return [gr.update(value=f"**{name}** · *{DESCRIPTIONS.get(name, '')}*")] + values_for(s)
 
-        preset.change(apply_preset, [preset], [about] + outputs)
-        reset.click(lambda: [gr.update(value=CUSTOM), gr.update(value="")]
+        pick.change(apply_preset, [pick], [about] + outputs)
+        reset.click(lambda: [gr.update(value=""), gr.update(value="*Everything back to neutral.*")]
                     + [gr.update(value=v) for v in settings().values()],
-                    [], [preset, about] + outputs)
+                    [], [pick, about] + outputs)
 
         # PNG info -> controls. Everything comes out of the one "Digital
         # Mastering" entry; an image without it switches the suite off and

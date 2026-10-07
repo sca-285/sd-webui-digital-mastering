@@ -1,8 +1,8 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 54 look presets,
-each with a one-line description. Grade only: camera traits such as vignette
+composite. Works on Forge, reForge and Forge Classic (Neo). 58 look presets in eight groups,
+each with an icon and a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
 ![Preset reference](preset_reference.jpg)
@@ -11,8 +11,9 @@ and grain are in Optical Realism (see below).
 
 ```
 [x] Digital Mastering
-    Look preset [..........v]  [Reset]
-    one-line description of the preset
+    [All] [Natural] [Portrait] [Film] [Cinema] [Auteur] [Mood] [B&W] [Splash]
+    ‹ [icon] [icon] [icon] [icon] [icon] ... ›     <- preset carousel
+    description of the picked preset    [Reset]
     [▦ Preset reference]           <- click to unfold the picture above
     Intensity  ------o---          <- how much of the whole grade, 0 = original
     > Quick start                  <- (closed)
@@ -40,6 +41,8 @@ A preset ticks the sections it uses (their other controls at neutral) and
 unticks the rest, Local light included; it never touches Intensity, the LUT, the overlays or the Output tab (frame and export), so you can set
 Intensity once and flick through presets. The colour sliders show a colour
 wheel on their track.
+
+**Picking a preset**: a carousel of small icons, one per preset, each the preset on a sample picture with a short word mark and its group. The chips above it filter by group, the arrows (or a sideways scroll) move along, a click applies the preset. Hover a card for its description.
 
 **Preset reference** unfolds a picture of every preset on three sample photos
 (portrait, still life, night scene). Scroll inside the box, or click the
@@ -102,6 +105,13 @@ cream highlights, whites held a little below clipping, blacks just lifted.
 *Lavender Dusk* covers the pink-sky evenings of the same style. Pair them with
 Optical Realism's *Film Camera 35mm* or *Heavy Film Grain* for the grain and
 halation that finish the look.
+
+The classic stocks: *Kodachrome* (deep reds and blues, dense shadows),
+*Velvia* (saturated landscape slide film, greens and skies pushed), *Cool Slide
+Stock*, *Faded Vintage* (a matte fade curve), *Bleach Bypass*, *Cross Process*
+(the cross-process curve) and *Instant Photo*. *B&W: Infrared* turns foliage
+white and skies black through the infrared filter; *Natural: Crisp Clear*
+takes haze out with dehaze before a light polish.
 
 ## HSL, colour wheels, black & white
 
@@ -175,7 +185,7 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 54 looks, each listing only what it changes
+lib_dm/presets.py              the 58 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
@@ -186,10 +196,13 @@ lib_dm/output.py               crop, resize, output sharpening, border, watermar
 lib_dm/xyz.py                  X/Y/Z plot axes
 lib_dm/segment.py              SegFormer-B0 person mask
 lib_dm/reference.py            the folded preset reference
+lib_dm/carousel.py             the preset carousel (HTML)
+javascript/dm_carousel.js      the preset carousel (clicks, filter, scroll)
+preset_icons.jpg/.json         the preset icons, one sprite
 preset_reference.jpg           the preset reference picture
 overlays/                      the shipped overlay textures
 overlay_reference.jpg          every shipped overlay on the sample photos
-style.css                      colour-wheel sliders, section titles, reference box
+style.css                      colour-wheel sliders, section titles, reference box, preset carousel
 ```
 
 ## Credits
@@ -202,6 +215,8 @@ generated in code for this extension.
 Sample photos in `preset_reference.jpg` and `overlay_reference.jpg`, from scikit-image's sample data:
 Eileen Collins by NASA (public domain), coffee cup by Rachel Michetti (CC0),
 Falcon 9 launch by SpaceX (public domain).
+
+Preset icons (`preset_icons.jpg`) use the same sample photos and are set in Bebas Neue, Playfair Display and Space Grotesk (SIL Open Font License 1.1); only the rendered picture is shipped, not the fonts.
 
 Thanks also to **Claude**, for help building this
 extension.

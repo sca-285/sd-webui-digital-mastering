@@ -55,3 +55,101 @@
     cursor: zoom-in;
 }
 .dm-ref-hint { margin-top: 4px; font-size: var(--text-xs, 11px); opacity: 0.7; }
+
+/* Preset carousel: category chips over a scrolling row of icon cards. */
+.dm-car { margin: 2px 0 6px 0; }
+.dm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.dm-chip {
+    padding: 3px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color-primary, rgba(128, 128, 128, 0.35));
+    background: transparent;
+    color: var(--body-text-color, inherit);
+    font-size: 12px;
+    line-height: 18px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+.dm-chip:hover { opacity: 1; border-color: var(--color-accent, #7aa2ff); }
+.dm-chip.dm-on {
+    opacity: 1;
+    background: var(--color-accent, #7aa2ff);
+    border-color: var(--color-accent, #7aa2ff);
+    color: #fff;
+}
+.dm-row { display: flex; align-items: center; gap: 6px; }
+.dm-nav {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color-primary, rgba(128, 128, 128, 0.35));
+    background: var(--button-secondary-background-fill, transparent);
+    color: var(--body-text-color, inherit);
+    font-size: 20px;
+    line-height: 24px;
+    cursor: pointer;
+}
+.dm-nav:hover { border-color: var(--color-accent, #7aa2ff); }
+.dm-track {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    padding: 3px 2px 6px 2px;
+}
+.dm-card {
+    flex: none;
+    width: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 4px 6px 4px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--body-text-color, inherit);
+    cursor: pointer;
+    scroll-snap-align: start;
+}
+.dm-card[hidden] { display: none; }
+.dm-card:hover { border-color: var(--border-color-primary, rgba(128, 128, 128, 0.35)); }
+.dm-card.dm-on {
+    border-color: var(--color-accent, #7aa2ff);
+    background: var(--background-fill-secondary, rgba(128, 128, 128, 0.12));
+}
+.dm-icon {
+    display: block;
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    background-color: #18191c;
+    background-repeat: no-repeat;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.dm-card.dm-on .dm-icon { box-shadow: 0 0 0 2px var(--color-accent, #7aa2ff); }
+.dm-letters {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f5f3ee;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.dm-name {
+    width: 100%;
+    font-size: 11px;
+    line-height: 13px;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+/* The textbox the carousel writes to: in the page, never on screen. */
+.dm-pick { display: none !important; }

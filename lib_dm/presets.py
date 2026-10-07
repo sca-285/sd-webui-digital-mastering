@@ -29,6 +29,8 @@ _P = {
         grad_stops=-0.35),
     "Natural: Soft Matte": dict(
         offset=0.04, slope=0.96, contrast=-0.15, saturation=0.90),
+    "Natural: Crisp Clear": dict(
+        dehaze=0.50, contrast=0.10, vibrance=0.20, clarity=0.20, sharpen=0.15),
     "Natural: HDR Detail": dict(
         contrast=-0.10, vibrance=0.25, clarity=0.90, clarity_radius=6.0, sharpen=0.25,
         grad_stops=-0.45, grad_position=0.40),
@@ -36,7 +38,7 @@ _P = {
     # ---- portrait -------------------------------------------------------
     "Portrait: Studio Skin": dict(
         temperature=0.10, offset=0.01, contrast=0.05, vibrance=0.15, highlight_hue=0.95,
-        highlight_tint=0.12, clarity=0.25, clarity_radius=6.0, sharpen=0.10,
+        highlight_tint=0.12, clarity=0.25, clarity_radius=6.0, sharpen=0.10, skin_smooth=0.35,
         semantic=True, protect=0.90,
         subject_light=0.15, background_light=-0.25),
     "Portrait: Soft Glamour": dict(
@@ -44,9 +46,8 @@ _P = {
         clarity=-0.35, clarity_radius=8.0, semantic=True, protect=0.85,
         rad_inside=0.15, rad_outside=-0.20, rad_on_people=True, rad_size=0.55, rad_softness=0.8),
     "Portrait: Golden Skin": dict(
-        temperature=0.25, contrast=0.10, vibrance=0.10, highlight_hue=0.09,
-        highlight_tint=0.25, semantic=True, protect=0.80,
-        grad_angle=315.0, grad_position=0.55, grad_softness=0.8, grad_hue=0.09, grad_tint=0.35),
+        contrast=0.10, vibrance=0.10, hsl_h_orange=-0.10, hsl_s_orange=0.15, hsl_l_orange=0.20,
+        hsl_s_red=0.10, hsl_l_red=0.10, highlight_hue=0.09, highlight_tint=0.12, semantic=True, protect=0.80),
     "Portrait: Editorial Crisp": dict(
         slope=1.05, offset=-0.02, contrast=0.25, saturation=0.90, clarity=0.45,
         clarity_radius=3.0, sharpen=0.35, semantic=True, protect=0.60,
@@ -54,13 +55,13 @@ _P = {
 
     # ---- film -------------------------------------------------------------------
     "Film: Portra Golden": dict(
-        temperature=0.15, slope=0.94, offset=0.025, contrast=0.10, saturation=0.95, vibrance=0.05,
-        shadow_hue=0.18, shadow_tint=0.15, highlight_hue=0.09, highlight_tint=0.28,
-        hsl_h_green=-0.25, hsl_s_green=-0.15, hsl_l_orange=0.15, hsl_s_blue=-0.10),
+        exposure=0.10, temperature=0.22, slope=0.94, offset=0.025, contrast=0.08, saturation=0.95,
+        vibrance=0.05, shadow_hue=0.12, shadow_tint=0.12, highlight_hue=0.09, highlight_tint=0.35,
+        hsl_h_green=-0.20, hsl_s_green=-0.10, hsl_l_orange=0.15, hsl_s_blue=-0.10),
     "Film: Olive Signature": dict(
-        exposure=-0.05, slope=0.93, offset=0.03, contrast=0.15, saturation=0.95,
-        shadow_hue=0.20, shadow_tint=0.20, highlight_hue=0.10, highlight_tint=0.20,
-        hsl_h_green=-0.40, hsl_s_green=-0.25, hsl_s_aqua=-0.20, hsl_l_orange=0.10),
+        exposure=-0.10, temperature=-0.03, slope=0.93, offset=0.03, contrast=0.18, saturation=0.92,
+        shadow_hue=0.22, shadow_tint=0.30, highlight_hue=0.11, highlight_tint=0.18,
+        hsl_h_green=-0.60, hsl_s_green=-0.30, hsl_s_aqua=-0.30, hsl_l_orange=0.10),
     "Film: Tungsten Amber": dict(
         exposure=-0.20, temperature=0.30, slope=0.93, offset=0.02, contrast=0.20, saturation=1.00,
         shadow_hue=0.13, shadow_tint=0.25, highlight_hue=0.11, highlight_tint=0.30,
@@ -78,16 +79,23 @@ _P = {
         exposure=-0.30, temperature=0.15, slope=0.92, contrast=0.30, saturation=1.05,
         shadow_hue=0.35, shadow_tint=0.20, highlight_hue=0.01, highlight_tint=0.30,
         rad_outside=-0.30, rad_size=0.70),
+    "Film: Kodachrome": dict(
+        temperature=0.08, contrast=0.25, saturation=1.10, hsl_s_red=0.30, hsl_l_red=-0.10,
+        hsl_s_blue=0.20, hsl_l_blue=-0.20, hsl_h_green=-0.20, highlight_hue=0.10, highlight_tint=0.12,
+        shadow_hue=0.60, shadow_tint=0.08),
+    "Film: Velvia": dict(
+        contrast=0.30, saturation=1.30, vibrance=0.20, hsl_s_green=0.30, hsl_s_blue=0.25, hsl_l_blue=-0.15,
+        hsl_s_aqua=0.20, curve="Soft S"),
     "Film: Cool Slide Stock": dict(
         contrast=0.30, saturation=1.20, temperature=-0.10, shadow_hue=0.64, shadow_tint=0.15),
     "Film: Faded Vintage": dict(
-        offset=0.07, slope=0.88, contrast=-0.10, saturation=0.75, highlight_hue=0.12,
-        highlight_tint=0.20, shadow_hue=0.55, shadow_tint=0.10),
+        offset=0.07, slope=0.88, contrast=-0.10, curve="Matte fade", saturation=0.70,
+        highlight_hue=0.12, highlight_tint=0.30, shadow_hue=0.55, shadow_tint=0.10),
     "Film: Bleach Bypass": dict(
         slope=1.05, offset=-0.02, contrast=0.45, saturation=0.45, clarity=0.50),
     "Film: Cross Process": dict(
-        tint=-0.15, contrast=0.30, saturation=1.20, shadow_hue=0.66, shadow_tint=0.35,
-        highlight_hue=0.16, highlight_tint=0.40),
+        tint=-0.15, contrast=0.20, curve="Cross process", saturation=1.20, shadow_hue=0.66,
+        shadow_tint=0.30, highlight_hue=0.16, highlight_tint=0.35),
     "Film: Instant Photo": dict(
         offset=0.08, contrast=-0.10, saturation=0.70, tint=0.10, highlight_hue=0.13,
         highlight_tint=0.30, shadow_hue=0.50, shadow_tint=0.25),
@@ -147,8 +155,9 @@ _P = {
         offset=0.04, slope=0.92, temperature=0.12, tint=0.10, contrast=0.10, saturation=0.90,
         shadow_hue=0.50, shadow_tint=0.20, highlight_hue=0.95, highlight_tint=0.15, clarity=-0.20),
     "Auteur: Saigon Rain": dict(
-        exposure=-0.25, offset=-0.01, contrast=0.30, saturation=1.10, temperature=-0.05,
-        shadow_hue=0.50, shadow_tint=0.45, highlight_hue=0.07, highlight_tint=0.30, clarity=0.15,
+        exposure=-0.25, offset=-0.01, contrast=0.30, saturation=1.05, temperature=-0.08,
+        shadow_hue=0.46, shadow_tint=0.50, highlight_hue=0.03, highlight_tint=0.25, clarity=0.15,
+        hsl_s_red=0.35, hsl_l_red=0.15, hsl_s_aqua=0.20,
         grad_stops=-0.30),
     "Auteur: Matte Street": dict(
         offset=0.05, slope=0.94, contrast=0.15, saturation=0.80, shadow_hue=0.50, shadow_tint=0.30,
@@ -187,16 +196,16 @@ _P = {
         contrast=0.35, saturation=1.35, shadow_hue=0.80, shadow_tint=0.50,
         highlight_hue=0.50, highlight_tint=0.45, clarity=0.30),
     "Mood: Autumn Warmth": dict(
-        temperature=0.30, tint=0.05, contrast=0.15, vibrance=0.30, highlight_hue=0.10,
-        highlight_tint=0.30, shadow_hue=0.02, shadow_tint=0.15,
-        grad_hue=0.06, grad_tint=0.25),
+        temperature=0.15, contrast=0.15, vibrance=0.20, hsl_h_green=-1.0, hsl_s_green=-0.20,
+        hsl_h_yellow=-0.60, hsl_s_orange=0.25, hsl_s_red=0.15, highlight_hue=0.10, highlight_tint=0.20,
+        shadow_hue=0.02, shadow_tint=0.12),
     "Mood: Arctic Cold": dict(
         exposure=0.15, temperature=-0.50, contrast=0.10, saturation=0.70,
         highlight_hue=0.55, highlight_tint=0.20, clarity=0.20,
         grad_stops=0.20, grad_hue=0.58, grad_tint=0.20),
     "Mood: Flash Snapshot": dict(
-        slope=1.04, contrast=0.30, saturation=1.05, vibrance=0.10, temperature=-0.08, clarity=0.10,
-        sharpen=0.20),
+        slope=1.05, contrast=0.40, curve="Strong S", saturation=1.10, vibrance=0.10, temperature=-0.10,
+        clarity=0.10, sharpen=0.25),
     "Mood: Anime Vivid": dict(
         exposure=0.05, contrast=0.20, saturation=1.30, vibrance=0.30, clarity=0.15,
         sharpen=0.35),
@@ -207,6 +216,8 @@ _P = {
     "B&W: Hard Noir": dict(
         bw=1.0, bw_filter="Red filter", exposure=-0.20, contrast=0.60, clarity=0.50,
         rad_outside=-0.40, rad_size=0.65),
+    "B&W: Infrared": dict(
+        bw=1.0, bw_filter="Infrared", curve="Soft S", contrast=0.10, clarity=-0.20),
     "B&W: Sepia": dict(
         bw=1.0, offset=0.02, contrast=0.10, highlight_hue=0.09, highlight_tint=0.45,
         shadow_hue=0.07, shadow_tint=0.35),
@@ -232,19 +243,22 @@ DESCRIPTIONS = {
     "Natural: Clean Polish": "A light clean-up: a touch more contrast, detail and colour. Suits almost anything.",
     "Natural: Vivid Pop": "Clearly richer colour and crisper detail. Good for landscapes and products.",
     "Natural: Soft Matte": "Lifted blacks and low contrast; easy on the eye, social-media style.",
+    "Natural: Crisp Clear": "Haze taken out, colour and detail back: hazy landscapes, cityscapes.",
     "Natural: HDR Detail": "Strong detail, open shadows and highlights. Easy to overdo on skin.",
-    "Portrait: Studio Skin": "Gently warm portrait that keeps skin smooth (uses people detection).",
+    "Portrait: Studio Skin": "Clean studio portrait: skin smoothed and kept warm, subject lifted (people detection).",
     "Portrait: Soft Glamour": "Soft glow with a pink touch in the highlights; beauty-shot look.",
-    "Portrait: Golden Skin": "Warm golden skin, like late-afternoon sun.",
+    "Portrait: Golden Skin": "Warm, glowing skin through HSL; the rest of the picture keeps its colour.",
     "Portrait: Editorial Crisp": "Magazine portrait: contrasty, crisp, slightly muted colour.",
-    "Film: Portra Golden": "Golden-hour portrait film: creamy warm highlights, soft olive shadows, whites that never clip.",
-    "Film: Olive Signature": "Editorial film look: olive-green shadows, cream highlights, rich but calm colour.",
+    "Film: Portra Golden": "Golden-hour portrait film: bright and warm, creamy highlights, whites that never clip.",
+    "Film: Olive Signature": "Editorial film look: olive-green shadows and foliage, cream highlights, calm colour.",
     "Film: Tungsten Amber": "Hotel-lamp interiors on film: deep amber, warm-green shadows, edges in shadow.",
     "Film: Emerald": "Deep emerald greens with warm skin: forests, green walls, green light.",
     "Film: Travel Ektar": "Daylight travel on film: rich blues and warm stone, soft whites, deeper sky.",
     "Film: Red Neon Night": "Night on film under red light: crimson highlights, green shadows, dark.",
+    "Film: Kodachrome": "Classic slide film: deep reds and blues, rich and a little warm.",
+    "Film: Velvia": "Landscape slide film: vivid greens and blues, punchy contrast.",
     "Film: Cool Slide Stock": "Slide film: cool, saturated, high contrast.",
-    "Film: Faded Vintage": "Old faded print: lifted blacks, washed colour, warm highlights.",
+    "Film: Faded Vintage": "Old faded print: lifted blacks, washed colour, yellowed highlights.",
     "Film: Bleach Bypass": "Silvery, near-desaturated, harsh contrast; war-film look.",
     "Film: Cross Process": "Cross-processed: blue shadows, yellow highlights, bold odd colour.",
     "Film: Instant Photo": "Instant camera: faded, teal shadows, yellow highlights.",
@@ -262,7 +276,7 @@ DESCRIPTIONS = {
     "Auteur: 2046": "Cool and glossy with red in the highlights, deep shadows.",
     "Auteur: Happy Together": "Hot saturated amber and gold, as in Happy Together's Buenos Aires.",
     "Auteur: Hong Kong 90s": "Soft, faded 90s Hong Kong film print: warm, a little magenta, gentle.",
-    "Auteur: Saigon Rain": "Wet city street: teal shadows, warm lamps, darker sky.",
+    "Auteur: Saigon Rain": "Wet city street at night: cyan shadows, red lamps glowing, darker sky.",
     "Auteur: Matte Street": "Street cinematic: matte blacks, muted teal, warm skin, background eased down (people detection).",
     "Auteur: Golden Anamorphic": "Low warm sun from the corner, soft and wide.",
     "Auteur: Sickly Thriller": "Murky yellow-green thriller grade, low colour, edges pulled down.",
@@ -272,15 +286,19 @@ DESCRIPTIONS = {
     "Mood: Blue Hour": "Blue dusk with a pink-violet touch in the highlights.",
     "Mood: Lavender Dusk": "Pink-lavender dusk: soft, airy, low contrast, a blush in the sky.",
     "Mood: Cyberpunk Neon": "Neon magenta and cyan, very saturated.",
-    "Mood: Autumn Warmth": "Warm red-orange autumn-leaf colour.",
+    "Mood: Autumn Warmth": "Autumn leaves: greens turned to gold and orange, rich reds.",
     "Mood: Arctic Cold": "Icy cold, bright, low colour.",
-    "Mood: Flash Snapshot": "Point-and-shoot flash colour: punchy contrast, slightly cool, crisp.",
+    "Mood: Flash Snapshot": "Point-and-shoot flash colour: hard contrast, slightly cool, crisp.",
     "Mood: Anime Vivid": "Bright, saturated, crisp edges: suits anime / illustration.",
     "B&W: Classic Silver": "Classic black & white through a yellow filter: richer skies, crisp midtones.",
     "B&W: Hard Noir": "Film noir through a red filter: near-black skies, hard contrast.",
+    "B&W: Infrared": "Infrared black & white: white foliage, black skies, a soft glow.",
     "B&W: Sepia": "Brown sepia, like an old photograph.",
     "Splash: Red Accent": "Keeps only red/orange; everything else black & white.",
     "Splash: Golden Yellow": "Keeps only yellow.",
     "Splash: Neon Blue": "Keeps only blue.",
     "Splash: Subject in Colour": "People stay in colour, the background goes grey (people detection, ~15 MB download on first use).",
 }
+
+# "Film: Portra Golden" -> "Film": the picker groups presets by this.
+CATEGORIES = {name: name.split(":", 1)[0] for name in PRESETS}
