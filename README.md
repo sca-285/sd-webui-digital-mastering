@@ -1,7 +1,7 @@
 # Stable Diffusion Extension - Digital Mastering Suite
 
 Post-processing grade applied to every generated image, after the inpaint
-composite. Works on Forge, reForge and Forge Classic (Neo). 56 look presets,
+composite. Works on Forge, reForge and Forge Classic (Neo). 54 look presets,
 each with a one-line description. Grade only: camera traits such as vignette
 and grain are in Optical Realism (see below).
 
@@ -16,7 +16,7 @@ and grain are in Optical Realism (see below).
     [▦ Preset reference]           <- click to unfold the picture above
     Intensity  ------o---          <- how much of the whole grade, 0 = original
     > Quick start                  <- (closed)
-    [ Color | Detail & Finish | Effects | Local | Overlay | Output | Repair & Tools ]
+    [ Color | Detail & Finish | Effects | HSL & Wheels | Local | Overlay | Output | Tools ]
       > Guide                      <- guide for this tab (closed)
       Section title
         [x] Enable ...
@@ -25,16 +25,17 @@ and grain are in Optical Realism (see below).
 
 | Tab | Sections |
 |---|---|
-| Color | Enable Color · Light (exposure, contrast) · White balance · Colour (saturation, vibrance) · Split toning · CDL |
-| Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen) · Finish (anti-banding) |
+| Color | Enable Color · Light (exposure, contrast, dehaze) · Tone curve · White balance · Colour (saturation, vibrance) · Split toning · Black & white (amount, colour filter) · CDL |
+| Detail & Finish | Enable Detail & Finish · Detail (clarity, clarity radius, sharpen, skin smoothing) · Finish (anti-banding) |
 | Effects | Selective colour · LUT (picker + Refresh, opacity, extra folder) |
+| HSL & Wheels | Enable HSL · hue, saturation, lightness for red, orange, yellow, green, aqua, blue, purple, magenta · Enable Color wheels · lift, gamma, gain (colour, amount, level) |
 | Local | Enable Local · Graduated filter (exposure, direction, reach, softness, colour) · Radial filter (inside, outside, centre on people, position, size, softness) · People / Background light |
 | Overlay | Enable Overlay · Layer 1 and Layer 2 (file + Refresh, blend, opacity, colour shift, zoom, fit) · Both layers (vary with seed, turn to match orientation, extra folder) |
-| Output | Frame: Enable Frame · Letterbox (1.85, 2, 2.39, 2.76:1) · Border (none, white, black, cream, Polaroid). Export: Enable Export · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Watermark (text, position, opacity, size, font file) |
-| Repair & Tools | Restoration · Protect people · Exposure check |
+| Output | Frame: Enable Frame · Letterbox (1.85, 2, 2.39, 2.76:1) · Border (none, white, black, cream, Polaroid). Export: Enable Export · Crop (aspect, keep people in, centre) · Size (long edge, output sharpening) · Subtitle (text, colour, size) · Watermark (text, position, opacity, size, font file) |
+| Tools | Protect people · Exposure check |
 
 Each section has an **Enable** box (Color, Detail & Finish, Selective Color,
-LUT, Local, Overlay, Frame, Export, Restoration); an unticked section is ignored whatever its sliders say.
+HSL, Color wheels, LUT, Local, Overlay, Frame, Export); an unticked section is ignored whatever its sliders say.
 A preset ticks the sections it uses (their other controls at neutral) and
 unticks the rest, Local light included; it never touches Intensity, the LUT, the overlays or the Output tab (frame and export), so you can set
 Intensity once and flick through presets. The colour sliders show a colour
@@ -51,7 +52,7 @@ order:
 
 | 1. [Auto Color Corrector](https://github.com/sca-285/sd-forge-auto-color-corrector) | 2. [Optical Realism](https://github.com/sca-285/sd-forge-optical-realism) | 3. [Digital Mastering](https://github.com/sca-285/sd-webui-digital-mastering) |
 |---|---|---|
-| **Correction**, automatic: measures the image and fixes only what is off (colour cast, black and white points, exposure, flat or harsh contrast, dull colour), or matches a reference picture | **The camera**: lens geometry, vignette, depth of field, blur, bloom, flare, halation, light wrap, flash, haze, grain, dust, scratches, date stamp, highlight roll-off | **The grade**, by hand or by preset: exposure, contrast, white balance, saturation, vibrance, split toning, CDL, LUT, selective colour, clarity, sharpen, overlays, anti-banding, JPEG repair |
+| **Correction**, automatic: measures the image and fixes only what is off (colour cast, black and white points, exposure, flat or harsh contrast, dull colour, skin tone, JPEG blocks, noise, a tilted horizon), or matches a reference picture | **The camera**: lens geometry, vignette, purple fringing, depth of field and bokeh, tilt-shift, blur, bloom, flare, anamorphic streak, star filter, god rays, halation, light wrap, flash, haze, grain, dust, scratches, date stamp, highlight roll-off, retro video | **The grade**, by hand or by preset: exposure, contrast, white balance, saturation, vibrance, split toning, CDL, LUT, selective colour, clarity, sharpen, overlays, HSL, colour wheels, tone curves, black & white, dehaze, skin smoothing, local light, subtitles, anti-banding |
 
 No two of them do the same job. Auto Color Corrector and Digital Mastering
 both touch exposure and white balance, but for opposite ends: the corrector
@@ -102,20 +103,39 @@ cream highlights, whites held a little below clipping, blacks just lifted.
 Optical Realism's *Film Camera 35mm* or *Heavy Film Grain* for the grain and
 halation that finish the look.
 
+## HSL, colour wheels, black & white
+
+- **HSL**: hue (up to 30°), saturation and lightness for eight colours, split
+  smoothly between neighbouring bands; greys are never touched. The Film presets
+  use it for their olive greens and warm skin.
+- **Colour wheels**: lift, gamma and gain, each with a colour push and a level,
+  the primary grade of a grading panel. Split toning cannot tint the midtones;
+  the gamma wheel can.
+- **Black & white**: monochrome through a filter as on B&W film (neutral, red,
+  orange, yellow, green, blue, infrared). The B&W presets use it: yellow for
+  Classic Silver, red for Hard Noir.
+- **Dehaze** (dark-channel method), **tone curves** (Film S, Soft S, Strong S,
+  Matte fade, Crushed blacks, Bright mids, Low contrast, Cross process) and
+  **skin smoothing** (frequency separation on detected skin, edges kept) round
+  it out. JPEG repair moved to Auto Color Corrector, which finds and fixes it by
+  itself; older PNG info with it still pastes.
+
 ## Order
 
-restoration -> exposure/WB (linear light) -> CDL -> contrast -> saturation ->
-split toning -> local light -> LUT -> selective colour -> clarity -> sharpen ->
-overlay layers -> Intensity -> crop -> resize -> output sharpening -> dither ->
-letterbox -> watermark -> border. Overlays go on after sharpening, so their specks are never
+dehaze -> exposure/WB (linear light) -> CDL -> colour wheels -> contrast -> tone
+curve -> saturation -> HSL -> black & white -> split toning -> local light -> LUT
+-> selective colour -> skin smoothing -> clarity -> sharpen -> overlay layers ->
+Intensity -> crop -> resize -> output sharpening -> dither -> letterbox ->
+subtitle -> watermark -> border. Overlays go on after sharpening, so their specks are never
 sharpened. The size-changing output steps follow Intensity, which blends with
 the original at its own size. Dither is the last pixel step so that nothing
-amplifies it; letterbox, watermark and border are drawn on top.
+amplifies it; letterbox, subtitle, watermark and border are drawn on top.
 
 ## X/Y/Z plot
 
 Axes for the X/Y/Z plot script, under `[DM]`: Preset, Intensity, LUT, Overlay
-layer 1, Overlay 1 opacity, Exposure, Contrast, Saturation, Temperature. A cell
+layer 1, Overlay 1 opacity, Exposure, Contrast, Saturation, Temperature, Tone
+curve, B&W filter, Black & white, Dehaze. A cell
 that sets any of them switches the suite on for that cell, so it can stay off
 in the panel; a Preset axis is applied first, the way the picker applies it,
 then the other axes on top. Pair a `[DM] Preset` axis with Optical Realism's
@@ -155,10 +175,11 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
-lib_dm/presets.py              the 56 looks, each listing only what it changes
+lib_dm/presets.py              the 54 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
 lib_dm/ops.py                  the image operations, pure torch
+lib_dm/grade.py                HSL, colour wheels, black & white, dehaze, tone curves, skin smoothing
 lib_dm/lut.py                  .cube discovery and parsing
 lib_dm/overlay.py              overlay discovery, loading and fitting
 lib_dm/output.py               crop, resize, output sharpening, border, watermark

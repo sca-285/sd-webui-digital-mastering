@@ -55,21 +55,25 @@ _P = {
     # ---- film -------------------------------------------------------------------
     "Film: Portra Golden": dict(
         temperature=0.15, slope=0.94, offset=0.025, contrast=0.10, saturation=0.95, vibrance=0.05,
-        shadow_hue=0.18, shadow_tint=0.15, highlight_hue=0.09, highlight_tint=0.28),
+        shadow_hue=0.18, shadow_tint=0.15, highlight_hue=0.09, highlight_tint=0.28,
+        hsl_h_green=-0.25, hsl_s_green=-0.15, hsl_l_orange=0.15, hsl_s_blue=-0.10),
     "Film: Olive Signature": dict(
         exposure=-0.05, slope=0.93, offset=0.03, contrast=0.15, saturation=0.95,
-        shadow_hue=0.20, shadow_tint=0.20, highlight_hue=0.10, highlight_tint=0.20),
+        shadow_hue=0.20, shadow_tint=0.20, highlight_hue=0.10, highlight_tint=0.20,
+        hsl_h_green=-0.40, hsl_s_green=-0.25, hsl_s_aqua=-0.20, hsl_l_orange=0.10),
     "Film: Tungsten Amber": dict(
         exposure=-0.20, temperature=0.30, slope=0.93, offset=0.02, contrast=0.20, saturation=1.00,
         shadow_hue=0.13, shadow_tint=0.25, highlight_hue=0.11, highlight_tint=0.30,
         rad_outside=-0.25, rad_size=0.75),
     "Film: Emerald": dict(
         exposure=-0.10, tint=-0.15, slope=0.93, offset=0.02, contrast=0.25, saturation=1.00,
-        shadow_hue=0.30, shadow_tint=0.28, highlight_hue=0.10, highlight_tint=0.18),
+        shadow_hue=0.30, shadow_tint=0.28, highlight_hue=0.10, highlight_tint=0.18,
+        hsl_s_green=0.25, hsl_l_green=-0.15, hsl_h_aqua=-0.20),
     "Film: Travel Ektar": dict(
         temperature=0.08, slope=0.94, offset=0.03, contrast=0.15, saturation=1.05, vibrance=0.15,
         shadow_hue=0.45, shadow_tint=0.12, highlight_hue=0.12, highlight_tint=0.15,
-        grad_stops=-0.25),
+        grad_stops=-0.25,
+        hsl_s_blue=0.15, hsl_l_blue=-0.10, hsl_h_aqua=0.15),
     "Film: Red Neon Night": dict(
         exposure=-0.30, temperature=0.15, slope=0.92, contrast=0.30, saturation=1.05,
         shadow_hue=0.35, shadow_tint=0.20, highlight_hue=0.01, highlight_tint=0.30,
@@ -199,12 +203,12 @@ _P = {
 
     # ---- black & white ------------------------------------------------------------
     "B&W: Classic Silver": dict(
-        saturation=0.0, contrast=0.25, clarity=0.30),
+        bw=1.0, bw_filter="Yellow filter", contrast=0.25, clarity=0.30),
     "B&W: Hard Noir": dict(
-        saturation=0.0, exposure=-0.20, contrast=0.60, clarity=0.50,
+        bw=1.0, bw_filter="Red filter", exposure=-0.20, contrast=0.60, clarity=0.50,
         rad_outside=-0.40, rad_size=0.65),
     "B&W: Sepia": dict(
-        saturation=0.0, offset=0.02, contrast=0.10, highlight_hue=0.09, highlight_tint=0.45,
+        bw=1.0, offset=0.02, contrast=0.10, highlight_hue=0.09, highlight_tint=0.45,
         shadow_hue=0.07, shadow_tint=0.35),
 
     # ---- colour splash ---------------------------------------------------------
@@ -218,9 +222,6 @@ _P = {
         splash_hue=0.0, splash_tolerance=0.01, splash_desat=0.80, contrast=0.15, clarity=0.20,
         semantic=True, protect=1.0),
 
-    # ---- repair ---------------------------------------------------------------------
-    "Repair: Web JPEG": dict(deblock=0.40, dering=0.30, dither=0.20),
-    "Repair: Heavy Compression": dict(deblock=0.85, dering=0.75, dither=0.40),
 }
 
 PRESETS = {name: compose(p) for name, p in _P.items()}
@@ -275,13 +276,11 @@ DESCRIPTIONS = {
     "Mood: Arctic Cold": "Icy cold, bright, low colour.",
     "Mood: Flash Snapshot": "Point-and-shoot flash colour: punchy contrast, slightly cool, crisp.",
     "Mood: Anime Vivid": "Bright, saturated, crisp edges: suits anime / illustration.",
-    "B&W: Classic Silver": "Classic black & white, crisp midtones.",
-    "B&W: Hard Noir": "Hard-contrast black & white; film noir.",
+    "B&W: Classic Silver": "Classic black & white through a yellow filter: richer skies, crisp midtones.",
+    "B&W: Hard Noir": "Film noir through a red filter: near-black skies, hard contrast.",
     "B&W: Sepia": "Brown sepia, like an old photograph.",
     "Splash: Red Accent": "Keeps only red/orange; everything else black & white.",
     "Splash: Golden Yellow": "Keeps only yellow.",
     "Splash: Neon Blue": "Keeps only blue.",
     "Splash: Subject in Colour": "People stay in colour, the background goes grey (people detection, ~15 MB download on first use).",
-    "Repair: Web JPEG": "Repairs lightly compressed JPEGs: fewer blocks, less edge speckle.",
-    "Repair: Heavy Compression": "Repairs heavily compressed images. Softens the picture.",
 }

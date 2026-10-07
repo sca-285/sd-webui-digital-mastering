@@ -2,10 +2,12 @@
 
 Order, and why:
 
-    restoration          repair the signal before anything amplifies its flaws
+    dehaze               take the haze out first, before anything grades it
     exposure / WB        in linear light, on the cleanest data
-    CDL, contrast        the primary grade
-    saturation, split    secondary colour
+    CDL, wheels,         the primary grade
+    contrast, curve
+    saturation, HSL,     secondary colour
+    B&W, split
     local                graduated / radial filters, people and background light
     LUT                  a look on top of the grade, as colourists stack it
     selective colour     after the look, so the kept hue is the final hue
@@ -27,7 +29,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from . import ops
+from . import grade, ops
 from . import output as out
 from . import overlay as ov
 from .controls import GROUPS, NEUTRAL, OVERLAY_CONTROLS, effective, is_neutral
@@ -66,7 +68,8 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
 
     protect = person = None
     wants_protect = s["semantic"] and (s["clarity"] != 0 or s["sharpen"] > 0 or s["splash_desat"] > 0)
-    wants_people = (s["en_local"] and (s["subject_light"] != 0 or s["background_light"] != 0
+    wants_people = s["skin_smooth"] > 0
+    wants_people = wants_people or (s["en_local"] and (s["subject_light"] != 0 or s["background_light"] != 0
                                        or (s["rad_on_people"] and _active(s, "rad_inside", "rad_outside"))))
     wants_people = wants_people or (s["en_export"] and s["out_crop_people"] and s["out_aspect"] != "Original")
     if mask_fn is not None and (wants_protect or wants_people):
@@ -80,19 +83,24 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
     gen = torch.Generator(device=x.device)
     gen.manual_seed(int(seed) & 0x7FFFFFFFFFFFFFFF)
 
-    if s["deblock"] > 0:
-        x = ops.deblock(x, s["deblock"])
-    if s["dering"] > 0:
-        x = ops.dering(x, s["dering"])
-
+    if s["dehaze"] > 0:
+        x = grade.dehaze(x, s["dehaze"])
     if _active(s, "exposure", "temperature", "tint"):
         x = ops.exposure_white_balance(x, s["exposure"], s["temperature"], s["tint"])
     if _active(s, "slope", "offset", "power"):
         x = ops.cdl(x, s["slope"], s["offset"], s["power"])
+    if s["en_wheels"] and _active(s, *GROUPS["en_wheels"]):
+        x = grade.wheels(x, *[(s[f"{w}_hue"], s[f"{w}_amt"], s[f"{w}_lum"]) for w in ("lift", "gamma", "gain")])
     if s["contrast"] != 0:
         x = ops.contrast(x, s["contrast"])
+    if s["curve"] != "Linear" and s["curve_amount"] > 0:
+        x = grade.tone_curve(x, s["curve"], s["curve_amount"])
     if _active(s, "saturation", "vibrance"):
         x = ops.saturation_vibrance(x, s["saturation"], s["vibrance"])
+    if s["en_hsl"] and _active(s, *GROUPS["en_hsl"]):
+        x = grade.hsl(x, *[[s[f"hsl_{k}_{b}"] for b in grade.HSL_BANDS] for k in "hsl"])
+    if s["bw"] > 0:
+        x = grade.black_and_white(x, s["bw"], s["bw_filter"])
     if s["shadow_tint"] > 0 or s["highlight_tint"] > 0:
         x = ops.split_tone(x, s["shadow_hue"], s["shadow_tint"],
                            s["highlight_hue"], s["highlight_tint"], s["tone_balance"])
@@ -107,6 +115,8 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
         x = ops.selective_color(x, s["splash_hue"], s["splash_tolerance"],
                                 s["splash_desat"], protect)
 
+    if s["skin_smooth"] > 0:
+        x = grade.skin_smooth(x, person, s["skin_smooth"])
     if s["clarity"] != 0:
         x = ops.clarity(x, s["clarity"], s["clarity_radius"], protect)
     if s["sharpen"] > 0:
@@ -145,10 +155,12 @@ def master(image: Image.Image, s: dict, device="cpu", seed=0, lut_volume=None, m
         if alpha.size != result.size:
             alpha = alpha.resize(result.size, Image.LANCZOS)
         result.putalpha(alpha)
-    # Letterbox bars first, the watermark over the picture, the border round all.
+    # Letterbox bars first, subtitle and watermark over the picture, the border round all.
     if s["en_frame"]:
         result = out.letterbox(result, s["out_letterbox"])
     if s["en_export"]:
+        bar = out.letterbox_bar(result.size, s["out_letterbox"]) if s["en_frame"] else 0
+        result = out.subtitle(result, s["sub_text"], s["sub_colour"], s["sub_size"], s.get("wm_font", ""), bar)
         result = out.watermark(result, s["wm_text"], s["wm_position"], s["wm_opacity"], s["wm_size"],
                                s.get("wm_font", ""))
     if s["en_frame"]:

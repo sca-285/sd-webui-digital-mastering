@@ -11,7 +11,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from .output import ASPECTS, BORDERS, LETTERBOXES, POSITIONS
+from .grade import BW_FILTERS, CURVES, HSL_BANDS
+from .output import ASPECTS, BORDERS, LETTERBOXES, POSITIONS, SUB_COLOURS
 from .overlay import BLENDS, FITS
 
 
@@ -38,7 +39,8 @@ CONTROLS = [
     Control("en_detail", "Enable Detail & Finish", False, kind="checkbox"),
     Control("en_splash", "Enable Selective Color", False, kind="checkbox"),
     Control("en_lut", "Enable LUT", False, kind="checkbox"),
-    Control("en_repair", "Enable Restoration", False, kind="checkbox"),
+    Control("en_hsl", "Enable HSL", False, kind="checkbox"),
+    Control("en_wheels", "Enable Color wheels", False, kind="checkbox"),
     Control("en_overlay", "Enable Overlay", False, kind="checkbox"),
     Control("en_local", "Enable Local", False, kind="checkbox"),
     Control("en_frame", "Enable Frame", False, kind="checkbox"),
@@ -46,6 +48,12 @@ CONTROLS = [
     # --- colour ------------------------------------------------------------
     Control("exposure", "Exposure", 0.0, -2.0, 2.0, 0.05, info="In stops: +1 = twice as bright."),
     Control("contrast", "Contrast", 0.0, -1.0, 1.0, 0.01),
+    Control("dehaze", "Dehaze", 0.0, 0.0, 1.0, 0.05, info="Takes haze and milkiness out of a picture."),
+    Control("curve", "Tone curve", "Linear", kind="choice", choices=tuple(CURVES)),
+    Control("curve_amount", "Curve amount", 1.0, 0.0, 1.0, 0.05),
+    Control("bw", "Black & white", 0.0, 0.0, 1.0, 0.05, info="1 = fully monochrome."),
+    Control("bw_filter", "B&W filter", "Neutral", kind="choice", choices=tuple(BW_FILTERS),
+            info="Red: dark skies, dramatic. Green: light foliage, smooth skin. Infrared: white leaves."),
     Control("temperature", "Temperature", 0.0, -1.0, 1.0, 0.01, info="- cool / + warm"),
     Control("tint", "Tint", 0.0, -1.0, 1.0, 0.01, info="- green / + magenta"),
     Control("saturation", "Saturation", 1.0, 0.0, 2.0, 0.01, info="0 = black & white"),
@@ -58,9 +66,41 @@ CONTROLS = [
     Control("slope", "CDL Slope", 1.0, 0.0, 2.0, 0.01, info="Gain: scales everything, mostly visible in highlights."),
     Control("offset", "CDL Offset", 0.0, -0.5, 0.5, 0.005, info="Lift: + milky blacks, - crushed blacks."),
     Control("power", "CDL Power", 1.0, 0.1, 3.0, 0.01, info="Gamma: < 1 brighter mids, > 1 darker mids."),
+    # --- color wheels: lift / gamma / gain -----------------------------------
+    *[c for w, lab in (("lift", "Lift (shadows)"), ("gamma", "Gamma (midtones)"), ("gain", "Gain (highlights)"))
+      for c in (Control(f"{w}_hue", f"{lab} colour", 0.55 if w == "lift" else 0.08, 0.0, 1.0, 0.01),
+                Control(f"{w}_amt", f"{lab} colour amount", 0.0, 0.0, 1.0, 0.01),
+                Control(f"{w}_lum", f"{lab} level", 0.0, -1.0, 1.0, 0.01))],
+    # --- HSL: hue / saturation / lightness by colour ---------------------------
+    Control("hsl_h_red", "Red: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_red", "Red: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_red", "Red: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_orange", "Orange: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_orange", "Orange: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_orange", "Orange: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_yellow", "Yellow: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_yellow", "Yellow: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_yellow", "Yellow: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_green", "Green: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_green", "Green: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_green", "Green: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_aqua", "Aqua: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_aqua", "Aqua: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_aqua", "Aqua: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_blue", "Blue: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_blue", "Blue: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_blue", "Blue: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_purple", "Purple: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_purple", "Purple: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_purple", "Purple: lightness", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_h_magenta", "Magenta: hue", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_s_magenta", "Magenta: saturation", 0.0, -1.0, 1.0, 0.05),
+    Control("hsl_l_magenta", "Magenta: lightness", 0.0, -1.0, 1.0, 0.05),
     # --- detail & finish ----------------------------------------------------
     Control("clarity", "Clarity", 0.0, -1.0, 2.0, 0.05, info="+ crisp local contrast / - soft glow"),
     Control("sharpen", "Sharpen", 0.0, 0.0, 1.0, 0.05, info="Edges only; flat areas and noise are left alone."),
+    Control("skin_smooth", "Skin smoothing (AI)", 0.0, 0.0, 1.0, 0.05,
+            info="Softens skin texture, keeps tone and edges. Uses people detection."),
     Control("clarity_radius", "Clarity radius", 4.0, 1.0, 10.0, 0.5,
             info="Small = texture, large = shape and depth."),
     Control("dither", "Anti-banding", 0.0, 0.0, 1.0, 0.05,
@@ -133,10 +173,11 @@ CONTROLS = [
     Control("wm_position", "Watermark position", "Bottom right", kind="choice", choices=tuple(POSITIONS)),
     Control("wm_opacity", "Watermark opacity", 0.6, 0.0, 1.0, 0.05),
     Control("wm_size", "Watermark size", 0.03, 0.01, 0.10, 0.005, info="Text height as a share of the shorter side."),
-    Control("wm_font", "Watermark font file", "", kind="text"),
+    Control("sub_text", "Subtitle", "", kind="text"),
+    Control("sub_colour", "Subtitle colour", "White", kind="choice", choices=tuple(SUB_COLOURS)),
+    Control("sub_size", "Subtitle size", 0.035, 0.015, 0.08, 0.005, info="Text height as a share of the shorter side."),
+    Control("wm_font", "Font file (watermark and subtitle)", "", kind="text"),
     # --- repair & tools ----------------------------------------------------------
-    Control("deblock", "JPEG de-blocking", 0.0, 0.0, 1.0, 0.05),
-    Control("dering", "De-ringing", 0.0, 0.0, 1.0, 0.05),
     Control("semantic", "Protect people (AI)", False, kind="checkbox"),
     Control("protect", "Protect strength", 0.75, 0.0, 1.0, 0.05),
     Control("false_color", "Exposure check (false colour)", False, kind="checkbox"),
@@ -152,17 +193,18 @@ NEUTRAL = {c.name: (c.default if c.neutral is None else c.neutral) for c in CONT
 GROUPS = {
     "en_color": ["exposure", "contrast", "temperature", "tint", "saturation", "vibrance",
                  "shadow_hue", "shadow_tint", "highlight_hue", "highlight_tint", "tone_balance",
-                 "slope", "offset", "power"],
-    "en_detail": ["clarity", "sharpen", "clarity_radius", "dither"],
+                 "slope", "offset", "power", "dehaze", "curve", "curve_amount", "bw", "bw_filter"],
+    "en_wheels": [f"{w}_{k}" for w in ("lift", "gamma", "gain") for k in ("hue", "amt", "lum")],
+    "en_hsl": [f"hsl_{k}_{b}" for b in HSL_BANDS for k in "hsl"],
+    "en_detail": ["clarity", "sharpen", "clarity_radius", "dither", "skin_smooth"],
     "en_splash": ["splash_desat", "splash_hue", "splash_tolerance"],
     "en_lut": ["lut", "lut_strength"],
-    "en_repair": ["deblock", "dering"],
     "en_local": ["grad_stops", "grad_angle", "grad_position", "grad_softness", "grad_hue", "grad_tint",
                  "rad_inside", "rad_outside", "rad_x", "rad_y", "rad_size", "rad_softness", "rad_on_people",
                  "subject_light", "background_light"],
     "en_frame": ["out_letterbox", "out_border", "out_border_size"],
     "en_export": ["out_aspect", "out_crop_x", "out_crop_y", "out_crop_people", "out_long_edge", "out_sharpen",
-                  "wm_text", "wm_position", "wm_opacity", "wm_size"],
+                  "wm_text", "wm_position", "wm_opacity", "wm_size", "sub_text", "sub_colour", "sub_size"],
     "en_overlay": [n for i in (1, 2) for n in (f"overlay_{i}", f"ov{i}_blend", f"ov{i}_opacity", f"ov{i}_hue",
                                                f"ov{i}_zoom", f"ov{i}_fit")] + ["ov_vary", "ov_rotate"],
 }
@@ -186,7 +228,7 @@ def coerce(name, value):
         return bool(value)
     if c.kind in ("lut", "overlay", "text"):
         value = "" if value is None else str(value)
-        if name == "wm_text":
+        if name in ("wm_text", "sub_text"):
             # PNG info is "k=v; k=v": keep the separators and quotes out.
             value = "".join(ch for ch in value if ch not in ';="\n').strip()[:80]
         return value
@@ -283,7 +325,8 @@ def to_infotext(s) -> str:
 # Earlier releases wrote a different, human-readable format. Parse it too,
 # so pasting an older image restores what can be restored.
 _LEGACY = [
-    (r"Restore\(Deblock:([-\d.]+) Ring:([-\d.]+) Band:([-\d.]+)\)", ("deblock", "dering", "dither")),
+    # JPEG repair moved to Auto Color Corrector; only the anti-banding part still applies here.
+    (r"Restore\(Deblock:([-\d.]+) Ring:([-\d.]+) Band:([-\d.]+)\)", (None, None, "dither")),
     (r"Clarity\(Str:([-\d.]+) Rad:([-\d.]+) Sharp:([-\d.]+)\)", ("clarity", "clarity_radius", "sharpen")),
     (r"CDL\(Slope:([-\d.]+) Off:([-\d.]+) Pwr:([-\d.]+)\)", ("slope", "offset", "power")),
     (r"LUT\((.+?) Str:([-\d.]+)\)", ("lut", "lut_strength")),
@@ -314,6 +357,8 @@ def from_infotext(text: str):
         m = re.search(pattern, text)
         if m:
             for k, v in zip(names, m.groups()):
+                if k is None:
+                    continue
                 try:
                     values[k] = coerce(k, v)
                 except ValueError:

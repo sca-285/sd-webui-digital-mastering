@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 ASPECTS = ["Original", "1:1", "4:5", "3:4", "2:3", "9:16", "5:4", "4:3", "3:2", "16:9", "21:9"]
 BORDERS = ["None", "White", "Black", "Cream", "Polaroid"]
 LETTERBOXES = ["None", "1.85:1", "2:1", "2.39:1", "2.76:1"]
+SUB_COLOURS = {"White": (245, 245, 240), "Yellow": (250, 222, 80)}
 POSITIONS = ["Bottom right", "Bottom left", "Bottom centre", "Top right", "Top left", "Centre"]
 
 _BORDER_RGB = {"White": (255, 255, 255), "Black": (0, 0, 0), "Cream": (243, 236, 222),
@@ -82,6 +83,38 @@ def letterbox(image: Image.Image, ratio):
     return out
 
 
+def letterbox_bar(size, ratio):
+    """Height of the bottom bar letterbox() would draw, 0 if none."""
+    if ratio not in LETTERBOXES or ratio == "None":
+        return 0
+    a, b = (float(v) for v in ratio.split(":"))
+    w, h = size
+    return max(0, int(round((h - w * b / a) / 2)))
+
+
+def subtitle(image: Image.Image, text, colour="White", size=0.035, font_path="", bar=0):
+    """A film subtitle: centred at the bottom with a dark outline, or in the
+    middle of the bottom letterbox bar when there is one deep enough."""
+    text = (text or "").strip()
+    if not text:
+        return image
+    w, h = image.size
+    font = _font(max(10, int(round(min(w, h) * size))), font_path)
+    out = image.convert("RGBA")
+    d = ImageDraw.Draw(out)
+    stroke = max(1, int(round(min(w, h) * size * 0.08)))
+    l, t, r, b = d.textbbox((0, 0), text, font=font, stroke_width=stroke)
+    tw, th = r - l, b - t
+    if bar >= th * 1.3:
+        y = h - bar + (bar - th) // 2
+    else:
+        y = h - th - int(round(min(w, h) * 0.06))
+    x = (w - tw) // 2
+    fill = SUB_COLOURS.get(colour, SUB_COLOURS["White"]) + (255,)
+    d.text((x - l, y - t), text, font=font, fill=fill, stroke_width=stroke, stroke_fill=(0, 0, 0, 200))
+    return out if image.mode == "RGBA" else out.convert(image.mode)
+
+
 def border(image: Image.Image, kind, size):
     """Frame the picture. size: border width as a share of the shorter side.
     Polaroid leaves a deeper strip at the bottom."""
@@ -137,4 +170,5 @@ def frame_active(s):
 
 def export_active(s):
     return s["en_export"] and (s["out_aspect"] != "Original" or s["out_long_edge"] > 0
-                               or s["out_sharpen"] > 0 or bool((s["wm_text"] or "").strip()))
+                               or s["out_sharpen"] > 0 or bool((s["wm_text"] or "").strip())
+                               or bool((s["sub_text"] or "").strip()))

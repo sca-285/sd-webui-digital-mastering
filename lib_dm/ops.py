@@ -92,30 +92,6 @@ def sobel_magnitude(y):
 
 # ---------------------------------------------------------------- restoration
 
-def deblock(x, strength):
-    """Soften the two pixels either side of each 8x8 JPEG block boundary."""
-    _, _, h, w = x.shape
-    rows = torch.arange(h, device=x.device)
-    cols = torch.arange(w, device=x.device)
-    on_r = ((rows % 8 == 7) & (rows < h - 1)) | ((rows % 8 == 0) & (rows > 0))
-    on_c = ((cols % 8 == 7) & (cols < w - 1)) | ((cols % 8 == 0) & (cols > 0))
-    mask = (on_r.view(1, 1, h, 1) | on_c.view(1, 1, 1, w)).to(x.dtype)
-    k = x.new_tensor([[1.0, 2.0, 1.0], [2.0, 4.0, 2.0], [1.0, 2.0, 1.0]]) / 16.0
-    blurred = F.conv2d(F.pad(x, (1, 1, 1, 1), mode="replicate"),
-                       k.expand(3, 1, 3, 3), groups=3)
-    return torch.lerp(x, blurred, mask * strength)
-
-
-def dering(x, strength):
-    """Smooth the flat areas right next to strong edges, where ringing lives."""
-    halo = sobel_magnitude(luma(x))
-    # 5x5 max as two 1-D passes: identical result, 10 comparisons instead of 25.
-    halo = F.max_pool2d(halo, (1, 5), stride=1, padding=(0, 2))
-    halo = F.max_pool2d(halo, (5, 1), stride=1, padding=(2, 0))
-    halo = (halo * 3.0).clamp(0.0, 1.0)
-    return torch.lerp(x, gaussian_blur(x, 1.5, radius=2), halo * strength)
-
-
 # ---------------------------------------------------------------- tone & colour
 
 def exposure_white_balance(x, exposure, temperature, tint):

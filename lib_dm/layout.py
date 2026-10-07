@@ -39,13 +39,18 @@ The *colour* sliders pick a hue around the wheel: 0 red · 0.08 orange · 0.16 y
 *amount* is how strong. Teal & Orange, for example: Shadow colour 0.5, amount 0.4; Highlight colour 0.08, amount 0.4.
 
 **CDL** is for people used to colourist tools: Slope ≈ gain, Offset ≈ lift / crush the blacks, Power ≈ midtone gamma.
+
+**Dehaze** takes haze and milkiness out (dark-channel method). **Tone curve** picks a ready-made curve: Film S, Matte fade, Crushed blacks, Cross process... *Curve amount* blends it in.
+**Black & white** turns the picture monochrome through a coloured filter, as on B&W film: red for dark dramatic skies, green for light foliage and smooth skin, infrared for white leaves.
 """,
         "sections": [
             (None, ["en_color"]),
-            ("Light", ["exposure", "contrast"]),
+            ("Light", ["exposure", "contrast", "dehaze"]),
+            ("Tone curve", ["curve", "curve_amount"]),
             ("White balance", ["temperature", "tint"]),
             ("Colour", ["saturation", "vibrance"]),
             ("Split toning", ["shadow_hue", "shadow_tint", "highlight_hue", "highlight_tint", "tone_balance"]),
+            ("Black & white", ["bw", "bw_filter"]),
             ("CDL", ["slope", "offset", "power"]),
         ],
     },
@@ -61,14 +66,15 @@ The *colour* sliders pick a hue around the wheel: 0 red · 0.08 orange · 0.16 y
 
 - **Clarity radius**: small affects texture, large affects shape and depth.
 - **Anti-banding**: a trace of noise that removes banding in skies and gradients. Always applied last.
+- **Skin smoothing (AI)**: softens skin texture by frequency separation, keeps the tones and the edges (eyes, lips, hair). Uses people detection (SegFormer-B0, ~15 MB, first use).
 
 Vignette and film grain are camera traits: they are in Optical Realism.
 
-Tip: for portraits, turn on **Protect people** in *Repair & Tools* so Clarity and Sharpen do not roughen skin.
+Tip: for portraits, turn on **Protect people** in *Tools* so Clarity and Sharpen do not roughen skin.
 """,
         "sections": [
             (None, ["en_detail"]),
-            ("Detail", ["clarity", "clarity_radius", "sharpen"]),
+            ("Detail", ["clarity", "clarity_radius", "sharpen", "skin_smooth"]),
             ("Finish", ["dither"]),
         ],
     },
@@ -79,7 +85,7 @@ Tip: for portraits, turn on **Protect people** in *Repair & Tools* so Clarity an
 1. Tick **Enable Selective Color**. **Grey out other colours** starts at 1 (fully grey); lower it to keep some colour everywhere.
 2. **Colour to keep** picks the colour: 0 red · 0.08 orange · 0.16 yellow · 0.33 green · 0.6 blue.
 3. **Colour range**: larger keeps more neighbouring hues.
-To keep *people* in colour instead, turn on **Protect people** in *Repair & Tools* (preset "Splash: Subject in Colour").
+To keep *people* in colour instead, turn on **Protect people** in *Tools* (preset "Splash: Subject in Colour").
 
 **LUT**: tick **Enable LUT**, copy `.cube` files into `models/LUTs` and press **Refresh**, or enter another folder in *Extra LUT folder*. Presets never change your LUT choice.
 **LUT opacity** tones the LUT down. The LUT is applied after the colour grade, the way colourists stack them.
@@ -87,6 +93,21 @@ To keep *people* in colour instead, turn on **Protect people** in *Repair & Tool
         "sections": [
             ("Selective colour", ["en_splash", "splash_desat", "splash_hue", "splash_tolerance"]),
             ("LUT", ["en_lut", "lut", "lut_strength", "lut_dir"]),
+        ],
+    },
+    {
+        "title": "HSL & Wheels",
+        "guide": """
+**HSL**: hue, saturation and lightness for each of eight colours, like Lightroom's HSL panel. Turn greens towards yellow and down for an olive film look, lift oranges for brighter skin, deepen blues for the sky. Greys are never touched.
+
+**Color wheels**: lift (shadows), gamma (midtones) and gain (highlights), as on a grading panel. *Colour* and *amount* push a colour into that range; *level* makes it darker or brighter. Split toning only reaches shadows and highlights; the gamma wheel tints the midtones too.
+""",
+        "sections": [
+            ("HSL", ["en_hsl"]),
+            *[(band.capitalize(), [f"hsl_h_{band}", f"hsl_s_{band}", f"hsl_l_{band}"])
+              for band in ("red", "orange", "yellow", "green", "aqua", "blue", "purple", "magenta")],
+            ("Color wheels", ["en_wheels", "lift_hue", "lift_amt", "lift_lum", "gamma_hue", "gamma_amt",
+                              "gamma_lum", "gain_hue", "gain_amt", "gain_lum"]),
         ],
     },
     {
@@ -151,6 +172,7 @@ The overlays are textures laid on top, the same on every image. For effects work
 | Crop to | Cuts the largest window of that shape: 4:5 feed, 9:16 Story / Reels, 1:1, 3:2 print. *Centre X / Y* move it; **Keep people in the crop** centres it on the subject |
 | Resize long edge | Exact output size, e.g. 1080 or 1350 for a feed. 0 = keep |
 | Output sharpening | A little crispness back after resizing |
+| Subtitle | A film subtitle, white or yellow with a dark outline, centred at the bottom (inside the letterbox bar when there is one) |
 | Watermark | Your name or handle, white with a soft shadow. A font file path (.ttf / .otf) is optional |
 
 Hires fix and upscalers run before this, so crop and resize apply to the final picture.
@@ -159,16 +181,14 @@ Hires fix and upscalers run before this, so crop and resize apply to the final p
             ("Frame", ["en_frame", "out_letterbox", "out_border", "out_border_size"]),
             ("Export: crop", ["en_export", "out_aspect", "out_crop_people", "out_crop_x", "out_crop_y"]),
             ("Export: size", ["out_long_edge", "out_sharpen"]),
+            ("Export: subtitle", ["sub_text", "sub_colour", "sub_size"]),
             ("Export: watermark", ["wm_text", "wm_position", "wm_opacity", "wm_size", "wm_font"]),
         ],
     },
     {
-        "title": "Repair & Tools",
+        "title": "Tools",
         "guide": """
-**Repair** (tick **Enable Restoration**): for img2img sources that are heavily compressed JPEGs or images saved from the web.
-- **JPEG de-blocking**: softens the 8×8 JPEG block grid.
-- **De-ringing**: removes the "mosquito" speckle around edges.
-Images generated from scratch (txt2img) do not need these.
+JPEG repair (de-blocking, de-ringing) and noise reduction are corrections, so they live in Auto Color Corrector, which finds and fixes them by itself.
 
 **Protect people (AI)**: finds people with SegFormer-B0 (~15 MB, downloaded on first use) and keeps Clarity, Sharpen and Grey-out off them. *Protect strength* = how much.
 
@@ -176,7 +196,6 @@ Images generated from scratch (txt2img) do not need these.
 purple = crushed black · teal = deep shadow · green = mid-grey · yellow = close to clipping · red = clipped.
 """,
         "sections": [
-            ("Restoration", ["en_repair", "deblock", "dering"]),
             ("Protect people", ["semantic", "protect"]),
             ("Exposure check", ["false_color"]),
         ],
@@ -184,7 +203,7 @@ purple = crushed black · teal = deep shadow · green = mid-grey · yellow = clo
 ]
 
 # Hue sliders get a rainbow track (style.css keys off this class).
-HUE_SLIDERS = {"shadow_hue", "highlight_hue", "splash_hue"}
+HUE_SLIDERS = {"shadow_hue", "highlight_hue", "splash_hue", "lift_hue", "gamma_hue", "gain_hue", "grad_hue"}
 
 
 def names_in(tab):

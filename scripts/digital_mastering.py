@@ -54,6 +54,10 @@ def _register_xyz():
         ("Contrast", float, "contrast", None),
         ("Saturation", float, "saturation", None),
         ("Temperature", float, "temperature", None),
+        ("Tone curve", str, "curve", lambda: list(BY_NAME["curve"].choices)),
+        ("B&W filter", str, "bw_filter", lambda: list(BY_NAME["bw_filter"].choices)),
+        ("Black & white", float, "bw", None),
+        ("Dehaze", float, "dehaze", None),
     ])
 
 
@@ -204,6 +208,7 @@ class Script(scripts.Script):
             hint = {"overlay_dir": "e.g. D:\\Overlays  (models/overlays is always searched)",
                     "lut_dir": "e.g. D:\\LUTs  (models/LUTs is always searched)",
                     "wm_text": "e.g. @yourname",
+                    "sub_text": "e.g. I've been waiting for you.",
                     "wm_font": "optional, e.g. C:\\Windows\\Fonts\\arialbd.ttf"}.get(c.name, "")
             return gr.Textbox(label=c.label, value=c.default, elem_id=eid, placeholder=hint)
         if c.kind == "lut":
