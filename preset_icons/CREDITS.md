@@ -12,10 +12,10 @@ Each icon is a photo from the [Open Images](https://storage.googleapis.com/openi
 | Portrait: Studio Skin | [3321_lågupplösta_fotograf_johan_lindberg](https://www.flickr.com/photos/gullspangsmodellen/7401385680) | Staffan Hjalmarsson |
 | Portrait: Soft Glamour | [IMG_4788 edit](https://www.flickr.com/photos/negative13/4826186134) | Bernardo Chang |
 | Portrait: Golden Skin | [19739_1308913036802_1049858808_981724_5350179_n](https://www.flickr.com/photos/puuedeser/5968012078) | .-L |
-| Portrait: Editorial Crisp | [SinoMen - Wallpaper - Maomao Xun](https://www.flickr.com/photos/sino-men/7858457774) | SinoMen |
+| Portrait: Editorial Crisp | [RJ010](https://www.flickr.com/photos/pilottheatre/4997845759) | Pilot Theatre |
 | Film: Portra Golden | [Horizonte 1](https://www.flickr.com/photos/mathiasmiranda/12272221216) | Mathias Miranda |
 | Film: Olive Signature | [DSC07770](https://www.flickr.com/photos/zeerood/8633406685) | Simon |
-| Film: Tungsten Amber | [Bogdan-Rares Rus & Marius Nica](https://www.flickr.com/photos/bortescristian/8438585715) | Cristian Bortes |
+| Film: Tungsten Amber | [IMG_0163](https://www.flickr.com/photos/pinguino/20851791255) | pinguino k |
 | Film: Emerald | [Thornes Park, Wakefield](https://www.flickr.com/photos/dennajones/2386188444) | Denna  Jones |
 | Film: Travel Ektar | [lisboa: tram](https://www.flickr.com/photos/ricardo/56054215) | ricardo |
 | Film: Red Neon Night | [Koon Nam Wah Bridal](https://www.flickr.com/photos/mike_elleray/6816412983) | Michael Elleray |
@@ -35,7 +35,7 @@ Each icon is a photo from the [Open Images](https://storage.googleapis.com/openi
 | Cinema: Day for Night | [Russell Lee: Shepherd with his horse and dog on Gravelly Range, Madison County, Montana, 1942](https://www.flickr.com/photos/trialsanderrors/2911357073) | trialsanderrors |
 | Cinema: Desert Heat | [DSC_4696](https://www.flickr.com/photos/graemenewcomb/2099603003) | Graeme Newcomb |
 | Auteur: Chungking Neon | [Food truck.](https://www.flickr.com/photos/12837894@N04/11636777934) | Kathy Drasky |
-| Auteur: Mood for Love | [Gail Collins](https://www.flickr.com/photos/wenews/4153354127/) | Women&#x27;s eNews |
+| Auteur: Mood for Love | [DSCN7216](https://www.flickr.com/photos/michaeljohnbutton/7845696142) | Michael Button |
 | Auteur: Fallen Angels | [Grua llevandose un carro del parque](https://www.flickr.com/photos/pe5pe/4017775419) | Luis Pérez |
 | Auteur: 2046 | [IMGP2344](https://www.flickr.com/photos/atbaker/3086356942) | Adam Baker |
 | Auteur: Happy Together | [francisco_rosa12](https://www.flickr.com/photos/gabrielaallegro/3523516985) | Gabriela Allegro |
@@ -58,7 +58,7 @@ Each icon is a photo from the [Open Images](https://storage.googleapis.com/openi
 | B&W: Hard Noir | [Francisca](https://www.flickr.com/photos/daveb/1892968590) | daveb_ |
 | B&W: Infrared | [IMG_0772](https://www.flickr.com/photos/woodhead/14599156014) | jasonwoodhead23 |
 | B&W: Sepia | [798 District, Beijing, China](https://www.flickr.com/photos/zapthedingbat/7880271424) | Sam Greenhalgh |
-| Splash: Red Accent | [Pascale Hutton wearing Paul Hardy - Heart and Stroke Foundation - The Heart Truth celebrity fashion show - Red Dress - Red Gown - Thursday February 8, 2012 - Creative Commons](https://www.flickr.com/photos/salty_soul/6821518998) | Jason Hargrove |
+| Splash: Red Accent | [The Red Sweater](https://www.flickr.com/photos/glenbledsoe/10524283774) | PhotoAtelier |
 | Splash: Golden Yellow | [New York Taxis](https://www.flickr.com/photos/vsmithuk/3142936004) | Vince Smith |
 | Splash: Neon Blue | [St Andrew Undershaft](https://www.flickr.com/photos/duncanh1/16525555508) | DncnH |
-| Splash: Subject in Colour | [Steve Wilson](https://www.flickr.com/photos/bobtravis/3340392398) | Bob Travis |
+| Splash: Subject in Colour | [sDSC_0024](https://www.flickr.com/photos/8053388@N06/4740513693) | ataelw |
