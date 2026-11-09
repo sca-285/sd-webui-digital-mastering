@@ -13,7 +13,7 @@ EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if EXTENSION_ROOT not in sys.path:
     sys.path.insert(0, EXTENSION_ROOT)
 
-from lib_dm import lut, overlay, segment, xyz  # noqa: E402
+from lib_dm import gpu, lut, overlay, segment, xyz  # noqa: E402
 from lib_dm.controls import (  # noqa: E402
     BY_NAME, GROUP_OF, INFOTEXT_KEY, LOCAL_ONLY, NAMES, coerce, from_infotext, settings, to_infotext,
 )
@@ -249,7 +249,10 @@ class Script(scripts.Script):
             return
 
         try:
-            device = devices.device
+            # The grade keeps about 60 float copies of the picture in flight,
+            # plus SegFormer (~15 MB, with its activations ~200 MB) when people
+            # detection is on. On the GPU only if it has room, else the CPU.
+            device = gpu.pick(devices.device, gpu.image_need(pp.image, 60) + 200 * gpu.MB, "Digital Mastering")
             volume = None
             if s["en_lut"] and s["lut"] not in ("", "None") and s["lut_strength"] > 0:
                 path = lut.find_luts(*lut_folders(s["lut_dir"])).get(s["lut"])
@@ -271,10 +274,11 @@ class Script(scripts.Script):
                     else:
                         layers[i] = loaded
 
-            result, scope = master(
-                pp.image, s, device=device, seed=_image_seed(p, pp.image), lut_volume=volume,
-                mask_fn=lambda im: segment.person_mask(im, device), overlays=layers,
-            )
+            with gpu.Timer("Digital Mastering", device):
+                result, scope = master(
+                    pp.image, s, device=device, seed=_image_seed(p, pp.image), lut_volume=volume,
+                    mask_fn=lambda im: segment.person_mask(im, device), overlays=layers,
+                )
         except Exception as exc:
             traceback.print_exc()
             print(f"[Digital Mastering] Error, image left untouched: {exc}")

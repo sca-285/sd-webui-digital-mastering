@@ -223,6 +223,14 @@ they moved to Optical Realism are ignored.
 
 ## Notes
 
+**VRAM.** Before it touches the GPU, the extension checks how much VRAM is
+really free. If Forge has filled it with the checkpoint (large models, low-VRAM
+mode), Forge is asked to unload models first, as it does itself before the VAE;
+if there is still not enough room, the step runs on the CPU. On Windows this
+avoids the driver spilling into system RAM, where post-processing slows to a
+crawl and seems stuck at 99-100 %. The console says where each step ran and how
+long it took.
+
 - Exposure and white balance work in linear light. Clarity and sharpen work on
   luminance only, so they cannot fringe colour edges; clarity is weighted to
   the midtones so it does not halo clipped areas.
@@ -245,6 +253,7 @@ they moved to Optical Realism are ignored.
 ```
 scripts/digital_mastering.py   UI + host hooks, built from the control table
 lib_dm/controls.py             every control, declared once (UI, presets, PNG info)
+lib_dm/gpu.py                  GPU or CPU: checks free VRAM, asks Forge to make room
 lib_dm/presets.py              the 58 looks, each listing only what it changes
 lib_dm/layout.py               tabs, sections and guide texts
 lib_dm/pipeline.py             the chain, in order, skipping inactive stages
